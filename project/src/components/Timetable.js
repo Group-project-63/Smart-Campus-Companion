@@ -1,25 +1,24 @@
-// src/components/Timetable.js
 import { useState, useEffect } from "react";
 import { db } from "../services/firebase";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import "./Timetable.css";
 
 export default function Timetable() {
   const { user } = useAuth();
 
-  // State for existing items and the add form
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     title: "",
     day: "Mon",
+    date: "",
     start: "09:00",
     end: "10:00",
     room: ""
   });
 
-  // ✅ 1) Load the timetable document for the current user (doc id = user.uid)
   useEffect(() => {
     if (!user) return;
     const ref = doc(db, "timetables", user.uid);
@@ -28,7 +27,6 @@ export default function Timetable() {
       .catch((err) => setError(err.message));
   }, [user]);
 
-  // ✅ 2) Add a new slot
   const addSlot = async (e) => {
     e.preventDefault();
     setError("");
@@ -53,7 +51,7 @@ export default function Timetable() {
         });
       }
       setItems((prev) => [...prev, slot]);
-      setForm({ title: "", day: "Mon", start: "09:00", end: "10:00", room: "" });
+      setForm({ title: "", day: "Mon", date: "", start: "09:00", end: "10:00", room: "" });
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to save timetable.");
@@ -62,9 +60,6 @@ export default function Timetable() {
     }
   };
 
-  // ⬇️ ✅ 3) PLACE YOUR HANDLERS HERE (inside the component, after state/hooks)
-
-  // Remove a slot by index
   const removeSlot = async (index) => {
     if (!user) return setError("You must be logged in.");
     const ref = doc(db, "timetables", user.uid);
@@ -78,7 +73,6 @@ export default function Timetable() {
     }
   };
 
-  // Update a slot by index with partial fields (e.g., { title, day, start, end, room })
   const updateSlot = async (index, updated) => {
     if (!user) return setError("You must be logged in.");
     const ref = doc(db, "timetables", user.uid);
@@ -92,9 +86,8 @@ export default function Timetable() {
     }
   };
 
-  // Helper to toggle edit UI (simple inline edit)
   const [editingIndex, setEditingIndex] = useState(null);
-  const [edit, setEdit] = useState({ title: "", day: "Mon", start: "", end: "", room: "" });
+  const [edit, setEdit] = useState({ title: "", day: "Mon", date: "", start: "", end: "", room: "" });
 
   const startEdit = (idx) => {
     const it = items[idx];
@@ -103,111 +96,68 @@ export default function Timetable() {
   };
   const cancelEdit = () => {
     setEditingIndex(null);
-    setEdit({ title: "", day: "Mon", start: "", end: "", room: "" });
+    setEdit({ title: "", day: "Mon", date: "", start: "", end: "", room: "" });
   };
   const saveEdit = async () => {
     await updateSlot(editingIndex, edit);
     cancelEdit();
   };
 
-  // ✅ 4) Render
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Your Timetable</h2>
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
+    <div className="timetable-container">
+      <h2 className="heading">Your Timetable</h2>
+      {error && <p className="error">{error}</p>}
 
-      {/* Add form */}
-      <form onSubmit={addSlot} style={{ display: "grid", gap: 8, maxWidth: 520 }}>
-        <input
-          placeholder="Course/Title"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-        />
-        <div style={{ display: "flex", gap: 8 }}>
-          <select value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value })}>
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <label>Start</label>
-            <input
-              type="time"
-              value={form.start}
-              onChange={(e) => setForm({ ...form, start: e.target.value })}
-            />
-            <label>End</label>
-            <input
-              type="time"
-              value={form.end}
-              onChange={(e) => setForm({ ...form, end: e.target.value })}
-            />
-          </div>
+      {/* Add Slot Form */}
+      <form onSubmit={addSlot} className="timetable-form">
+        <input placeholder="Course/Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <select value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value })}>
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+        <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+        <div className="time-inputs">
+          <input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
+          <input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
         </div>
-        <input
-          placeholder="Room"
-          value={form.room}
-          onChange={(e) => setForm({ ...form, room: e.target.value })}
-        />
-        <button disabled={busy} type="submit">
-          {busy ? "Adding..." : "Add Slot"}
-        </button>
+        <input placeholder="Room" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
+        <button className="primary-btn" disabled={busy}>{busy ? "Adding..." : "Add Slot"}</button>
       </form>
 
-      {/* List */}
-      <ul style={{ marginTop: 16 }}>
+      {/* Timetable List */}
+      <div className="timetable-list">
         {items.map((it, idx) => (
-          <li key={idx} style={{ marginBottom: 10 }}>
+          <div key={idx} className="slot-card">
             {editingIndex === idx ? (
-              // Inline edit UI
-              <div style={{ display: "grid", gap: 8, maxWidth: 520 }}>
+              <div className="edit-form">
                 <input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <select value={edit.day} onChange={(e) => setEdit({ ...edit, day: e.target.value })}>
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="time"
-                    value={edit.start}
-                    onChange={(e) => setEdit({ ...edit, start: e.target.value })}
-                  />
-                  <input
-                    type="time"
-                    value={edit.end}
-                    onChange={(e) => setEdit({ ...edit, end: e.target.value })}
-                  />
-                </div>
+                <select value={edit.day} onChange={(e) => setEdit({ ...edit, day: e.target.value })}>
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <input type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
+                <input type="time" value={edit.start} onChange={(e) => setEdit({ ...edit, start: e.target.value })} />
+                <input type="time" value={edit.end} onChange={(e) => setEdit({ ...edit, end: e.target.value })} />
                 <input value={edit.room} onChange={(e) => setEdit({ ...edit, room: e.target.value })} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={saveEdit}>Save</button>
-                  <button type="button" onClick={cancelEdit}>
-                    Cancel
-                  </button>
+                <div className="actions">
+                  <button className="primary-btn" onClick={saveEdit}>Save</button>
+                  <button className="cancel-btn" type="button" onClick={cancelEdit}>Cancel</button>
                 </div>
               </div>
             ) : (
-              // Read-only view
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <span>
-                  <b>{it.title}</b> — {it.day} {it.start}-{it.end} ({it.room})
-                </span>
-                <button type="button" onClick={() => startEdit(idx)}>
-                  Edit
-                </button>
-                <button type="button" onClick={() => removeSlot(idx)}>
-                  Delete
-                </button>
+              <div className="slot-info">
+                <strong>{it.title}</strong> — {it.day}, {it.date} {it.start}-{it.end} ({it.room})
+                <div className="actions">
+                  <button className="edit-btn" onClick={() => startEdit(idx)}>Edit</button>
+                  <button className="delete-btn" onClick={() => removeSlot(idx)}>Delete</button>
+                </div>
               </div>
             )}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

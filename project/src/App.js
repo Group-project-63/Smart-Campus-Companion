@@ -90,7 +90,7 @@ function App() {
             }
           />
           <Route
-            path="/Announcements"
+            path="/announcements"
             element={
             <ProtectedRoute>
               <AdminRoute>
