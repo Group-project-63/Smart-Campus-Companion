@@ -1,22 +1,37 @@
-// src/components/NotesList.js
-import useLiveCollection from "../hooks/useLiveCollection";
-import { useAuth } from "../context/AuthContext";
+import React, { useMemo } from "react";
+import useDebounce from "../hooks/useDebounce";
+import { useSearch } from "../context/SearchContext";
 
-export default function NotesList() {
-  const { user } = useAuth();
-  const notes = useLiveCollection("notes", "uploadedAt", "desc");
-  const mine = notes.filter(n => n.ownerUid === user?.uid);
+export default function NotesList({ notes = [] }) {
+  const { query, scope } = useSearch();
+  const q = useDebounce(query.toLowerCase().trim(), 200);
+
+  const filtered = useMemo(() => {
+    if (!q) return notes;
+    if (scope !== "all" && scope !== "notes") return notes;
+
+    return notes.filter((n) => {
+      const text = [n.title, n.subject, n.author, n.text, (n.tags || []).join(" ")]
+        .join(" ")
+        .toLowerCase();
+      return text.includes(q);
+    });
+  }, [notes, q, scope]);
+
   return (
-    <div style={{ padding: 16 }}>
-      <h3>Your Notes</h3>
-      {mine.length === 0 ? <p>No notes yet.</p> : (
-        <ul>
-          {mine.map(n => (
-            <li key={n.id}>
-              <a href={n.fileUrl} target="_blank" rel="noreferrer">{n.title}</a> ({n.courseCode})
-            </li>
-          ))}
-        </ul>
+    <div>
+      {filtered.length ? (
+        filtered.map((n) => (
+          <div key={n.id}>
+            <h4>{n.title}</h4>
+            <p>
+              <strong>{n.subject}</strong> • {n.author}
+            </p>
+            <p>{n.text}</p>
+          </div>
+        ))
+      ) : (
+        <p style={{ opacity: 0.7 }}>No notes match “{query}”.</p>
       )}
     </div>
   );

@@ -1,15 +1,10 @@
-// src/components/AdminRoute.js
+import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import useRole from "../hooks/useRole";
 
 export default function AdminRoute({ children }) {
-  const { user, loading } = useAuth();
-  const role = useRole();
-
-  if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (role !== "admin") return <Navigate to="/" replace />;
-
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (!isAdmin) return <Navigate to="/403" replace />;
   return children;
-};
+}

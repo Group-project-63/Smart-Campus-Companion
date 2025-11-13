@@ -1,51 +1,57 @@
-// src/components/NotesUpload.js
-import React, { useState, useEffect } from 'react';
-import { storage } from '../services/firebase';
-import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
+// src/components/NotesUpload.js (simple version)
+import React, { useState } from 'react';
+import { useSearch } from '../context/SearchContext';
 
-const NotesUpload = () => {
+export default function NotesUpload() {
   const [file, setFile] = useState(null);
-  const [notes, setNotes] = useState([]);
-
-  const handleFileChange = e => {
-    setFile(e.target.files[0]);
-  };
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const handleUpload = async () => {
-    if (!file) return;
-    const storageRef = ref(storage, `notes/${file.name}`);
-    await uploadBytes(storageRef, file);
-    setFile(null);
-    fetchNotes();
-  };
+    setMsg('');
+    if (!file) {
+      setMsg('Please select a file');
+      return;
+    }
+    setBusy(true);
 
-  const fetchNotes = async () => {
-    const notesRef = ref(storage, 'notes/');
-    const result = await listAll(notesRef);
-    const urls = await Promise.all(result.items.map(item => getDownloadURL(item)));
-    setNotes(urls);
-  };
+    const formData = new FormData();
+    formData.append('file', file);
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+    try {
+      const resp = await fetch('http://localhost:4000/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setMsg(data.error || `Upload failed (HTTP ${resp.status})`);
+      } else {
+        setMsg(`Uploaded: ${data.file?.name || file.name}`);
+        // Optionally show the URL: http://localhost:4000 + data.file.url
+        console.log('File URL:', `http://localhost:4000${data.file?.url}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMsg(`Upload failed: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div>
-      <h2>Upload Notes</h2>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
-
-      <h3>Uploaded Notes</h3>
-      <ul>
-        {notes.map((url, index) => (
-          <li key={index}>
-            <a href={url} target="_blank" rel="noopener noreferrer">View Note {index + 1}</a>
-          </li>
-        ))}
-      </ul>
+      <h3>Upload Notes</h3>
+      <input
+        type="file"
+        accept="application/pdf,image/*"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
+      <button onClick={handleUpload} disabled={!file || busy}>
+        {busy ? 'Uploading…' : 'Upload'}
+      </button>
+      {msg && <p>{msg}</p>}
     </div>
   );
-};
-
-export default NotesUpload;
+}

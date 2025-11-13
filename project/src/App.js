@@ -1,149 +1,93 @@
-// src/App.js
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import { SearchProvider } from "./context/SearchContext";
 
+import AppLayout from "./components/AppLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 
-import AdminEvents from "./pages/AdminEvents";
-import EventsList from "./components/EventsList";
-
-
-
-import AdminRoute from "./components/AdminRoute";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
-import Announcements from "./components/Announcements";
-import Profile from "./pages/Profile";
+import AdminEvents from "./pages/AdminEvents";
 
-
-// Feature components
 import Timetable from "./components/Timetable";
 import Events from "./components/Events";
 import NotesUpload from "./components/NotesUpload";
 import CampusMap from "./components/CampusMap";
-import AdminDashboard from "./pages/AdminDashboard";
+import Announcements from "./components/Announcements";
+import Profile from "./pages/Profile";
+import Forbidden from "./pages/Forbidden";
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/Verify-email" element={<VerifyEmail />} />
+      <SearchProvider>
+        <Router>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/403" element={<Forbidden />} />
 
-          {/* Protected area */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/timetable"
-            element={
-              <ProtectedRoute>
-                <Timetable />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/events"
-            element={
-              <ProtectedRoute>
-                <Events />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notes"
-            element={
-              <ProtectedRoute>
-                <NotesUpload />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <CampusMap />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Adminannouncements"
-            element={
-              <ProtectedRoute>            
-                <AdminRoute>
-                  <AdminAnnouncements />
-                </AdminRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/announcements"
-            element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <Announcements />
-              </AdminRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="profile"
-          element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <Profile />
-              </AdminRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin"
-          element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events"
-          element={
-            <ProtectedRoute>
-              <EventsList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="AdminEvents"
-          element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <AdminEvents />
-              </AdminRoute>
-            </ProtectedRoute>
-          }
-        />
+            {/* Protected area wrapped by AppLayout */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              {/* Home */}
+              <Route index element={<Home />} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+              {/* User features */}
+              <Route path="timetable" element={<Timetable />} />
+              <Route path="events" element={<Events />} />
+              <Route path="notes" element={<NotesUpload />} />
+              <Route path="map" element={<CampusMap />} />
+              <Route path="announcements" element={<Announcements />} />
+              <Route path="profile" element={<Profile />} />
+
+              {/* Admin pages */}
+              <Route
+                path="admindashboard"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="adminannouncements"
+                element={
+                  <AdminRoute>
+                    <AdminAnnouncements />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="adminevents"
+                element={
+                  <AdminRoute>
+                    <AdminEvents />
+                  </AdminRoute>
+                }
+              />
+            </Route>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </SearchProvider>
     </AuthProvider>
   );
 }
-
 export default App;

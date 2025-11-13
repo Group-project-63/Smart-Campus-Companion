@@ -1,23 +1,42 @@
-// src/components/EventsList.js
-import useLiveCollection from "../hooks/useLiveCollection";
+import React, { useMemo } from "react";
+import useDebounce from "../hooks/useDebounce";
+import { useSearch } from "../context/SearchContext";
 
-export default function EventsList() {
-  const events = useLiveCollection("events", "date", "asc");
+export default function EventsList({ events = [] }) {
+  const { query, scope } = useSearch();
+  const q = useDebounce(query.toLowerCase().trim(), 200);
+
+  const filtered = useMemo(() => {
+    if (!q) return events;
+    if (scope !== "all" && scope !== "events") return events;
+
+    return events.filter((ev) => {
+      const text = [
+        ev.title,
+        ev.description,
+        ev.location,
+        ev.date,
+        (ev.tags || []).join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return text.includes(q);
+    });
+  }, [events, q, scope]);
+
+  if (!filtered.length) return <p style={{ opacity: 0.7 }}>No events match “{query}”.</p>;
+
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Events</h2>
-      {events.length === 0 ? <p>No events yet.</p> : (
-        <ul>
-          {events.map(ev => {
-            const when = ev.date?.seconds ? new Date(ev.date.seconds * 1000).toLocaleString() : "—";
-            return (
-              <li key={ev.id}>
-                <b>{ev.title}</b> — {when} @ {ev.location}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+    <ul className="events-list">
+      {filtered.map((ev, idx) => (
+        <li key={ev.id || idx}>
+          <h4>{ev.title}</h4>
+          <p>{ev.description}</p>
+          <small>
+            {ev.location} • {ev.date}
+          </small>
+        </li>
+      ))}
+    </ul>
   );
 }

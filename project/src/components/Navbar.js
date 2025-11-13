@@ -1,26 +1,65 @@
-// src/components/Navbar.js
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import SearchBar from "./SearchBar";
+
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { logout, currentUser } = useAuth(); // If your AuthContext exposes 'user' instead, change to { user }
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
-  const out = async () => { await logout(); navigate("/login"); };
+
+  const handleLogout = async (e) => {
+    e?.preventDefault?.();
+    if (busy) return;
+    setBusy(true);
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <header style={{ display: "flex", gap: 16, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #e5e7eb" }}>
-      <Link to="/">🏫 Smart Campus</Link>
-      <nav style={{ display: "flex", gap: 12 }}>
-        <Link to="/timetable">Timetable</Link>
-        <Link to="/events">Events</Link>
-        <Link to="/map">Map</Link>
-        <Link to="/notes">Notes</Link>
-        <Link to="/announcements">Announcements</Link>
-        <Link to="/profile">Profile</Link>
-      </nav>
-      <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-        <span>{user?.displayName || user?.email}</span>
-        <button onClick={out} style={{ padding: "6px 10px", background: "#ef4444", color: "#fff", border: 0, borderRadius: 6 }}>Logout</button>
+    <nav
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        padding: 12,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        borderBottom: "1px solid #eee",
+        background: "#fafafa",
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>Smart Campus Companion</span>
+
+      {/* Always render the search bar on protected pages */}
+      <div style={{ flex: 1, maxWidth: 520, marginLeft: "auto" }}>
+        <SearchBar placeholder="Search events, announcements, notes…" />
       </div>
-    </header>
+
+      {currentUser && (
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={busy}
+          style={{
+            padding: "6px 10px",
+            marginLeft: 12,
+            borderRadius: 6,
+            border: "1px solid #ddd",
+            background: busy ? "#f4f4f4" : "#fff",
+            cursor: busy ? "not-allowed" : "pointer",
+          }}
+        >
+          {busy ? "Logging out..." : "Logout"}
+        </button>
+      )}
+    </nav>
   );
 }

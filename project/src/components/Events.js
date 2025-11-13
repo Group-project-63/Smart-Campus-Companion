@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useSearch } from '../context/SearchContext';
+import useDebounce from '../hooks/useDebounce';
 import './Events.css';
 
 const Events = () => {
@@ -9,9 +11,13 @@ const Events = () => {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({ title: '', date: '', description: '' });
 
+  // 🔎 Global search state
+  const { query, scope } = useSearch();
+  const q = useDebounce(query.toLowerCase().trim(), 200);
+
   const fetchEvents = async () => {
     const querySnapshot = await getDocs(collection(db, 'events'));
-    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const data = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     setEvents(data);
   };
 
@@ -57,15 +63,51 @@ const Events = () => {
     fetchEvents();
   };
 
+  // 🧠 Client-side filtering based on global query/scope
+  const filtered = useMemo(() => {
+    if (!q) return events;
+    // Respect search scope; only filter here if scope is 'all' or 'events'
+    if (scope !== 'all' && scope !== 'events') return events;
+
+    return events.filter(ev => {
+      const text = [
+        ev.title,
+        ev.date,           // 'YYYY-MM-DD' string from your input
+        ev.description
+      ].join(' ').toLowerCase();
+
+      return text.includes(q);
+    });
+  }, [events, q, scope]);
+
   return (
     <div className="events-container">
       <h2 className="heading">Campus Events</h2>
 
       {/* Add Event Form */}
       <form onSubmit={handleSubmit} className="event-form">
-        <input type="text" name="title" placeholder="Event Title" value={formData.title} onChange={handleChange} required />
-        <input type="date" name="date" value={formData.date} onChange={handleChange} required />
-        <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} required />
+        <input
+          type="text"
+          name="title"
+          placeholder="Event Title"
+          value={formData.title}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="date"
+          name="date"
+          value={formData.date}
+          onChange={handleChange}
+          required
+        />
+        <textarea
+          name="description"
+          placeholder="Description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+        />
         <button type="submit" className="primary-btn">Add Event</button>
       </form>
 
@@ -73,14 +115,30 @@ const Events = () => {
       <div className="event-list">
         {events.length === 0 ? (
           <p>No events yet.</p>
+        ) : filtered.length === 0 && q ? (
+          <p style={{ opacity: 0.7 }}>No events match “{query}”.</p>
         ) : (
-          events.map(event => (
+          filtered.map(event => (
             <div key={event.id} className="event-card">
               {editingId === event.id ? (
                 <div className="edit-form">
-                  <input type="text" name="title" value={editData.title} onChange={handleEditChange} />
-                  <input type="date" name="date" value={editData.date} onChange={handleEditChange} />
-                  <textarea name="description" value={editData.description} onChange={handleEditChange} />
+                  <input
+                    type="text"
+                    name="title"
+                    value={editData.title}
+                    onChange={handleEditChange}
+                  />
+                  <input
+                    type="date"
+                    name="date"
+                    value={editData.date}
+                    onChange={handleEditChange}
+                  />
+                  <textarea
+                    name="description"
+                    value={editData.description}
+                    onChange={handleEditChange}
+                  />
                   <div className="actions">
                     <button className="primary-btn" onClick={saveEdit}>Save</button>
                     <button className="cancel-btn" onClick={cancelEdit}>Cancel</button>

@@ -1,16 +1,25 @@
 // src/pages/Home.js
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSearch } from "../context/SearchContext";
 
 const Home = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  const { setScope } = useSearch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setScope("all");
+  }, [setScope]);
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login"); // redirect to login after sign out
+    navigate("/login", { replace: true });
   };
+
+  const prettyName =
+    user?.displayName || (user?.email ? user.email.split("@")[0] : "") || "User";
 
   return (
     <div style={styles.page}>
@@ -22,8 +31,14 @@ const Home = () => {
             Manage your classes, events, notes, and campus info—all in one place.
           </p>
           <div style={styles.userInfo}>
-            <span>Signed in as </span>
-            <strong>{user?.displayName || user?.email}</strong>
+            {loading ? (
+              <span>Loading user…</span>
+            ) : (
+              <>
+                <span>Signed in as </span>
+                <strong>{prettyName}</strong>
+              </>
+            )}
           </div>
         </div>
         <div style={styles.heroBadge}>🚀 MVP</div>
@@ -39,11 +54,12 @@ const Home = () => {
           <Card to="/notes" emoji="📄" title="Notes Upload" desc="Upload and access your notes." />
           <Card to="/announcements" emoji="📢" title="Announcements" desc="Latest updates from campus." />
           <Card to="/profile" emoji="👤" title="Profile" desc="Set department/year for tailored info." />
+          <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />
         </div>
 
         {/* Logout button */}
         <div style={{ marginTop: 20 }}>
-          <button onClick={handleLogout} style={styles.logoutBtn}>
+          <button type="button" onClick={handleLogout} style={styles.logoutBtn}>
             Log Out
           </button>
         </div>
@@ -63,23 +79,12 @@ function Card({ to, emoji, title, desc }) {
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)",
-    padding: "24px",
-  },
+  page: { minHeight: "100vh", background: "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)", padding: "24px" },
   hero: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    border: "1px solid #e5e7eb",
-    background: "#ffffff",
-    padding: "24px",
-    borderRadius: "16px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
-    marginBottom: "24px",
-    position: "relative",
-    overflow: "hidden",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    border: "1px solid #e5e7eb", background: "#ffffff", padding: "24px",
+    borderRadius: "16px", boxShadow: "0 10px 25px rgba(0,0,0,0.06)", marginBottom: "24px",
+    position: "relative", overflow: "hidden",
   },
   heroContent: { maxWidth: "720px" },
   title: { fontSize: "28px", margin: 0, color: "#111827", fontWeight: 700 },
@@ -102,13 +107,8 @@ const styles = {
   cardTitle: { fontSize: "16px", fontWeight: 600, color: "#111827", marginBottom: "6px" },
   cardDesc: { fontSize: "13px", color: "#6b7280" },
   logoutBtn: {
-    padding: "10px 16px",
-    backgroundColor: "#ef4444",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: 600,
+    padding: "10px 16px", backgroundColor: "#ef4444", color: "#fff",
+    border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600,
   },
 };
 
