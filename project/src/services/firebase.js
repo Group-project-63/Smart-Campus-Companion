@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAmg2I6qOrsMvNWOUglpZcN7H5mMP7b_iM",
   authDomain: "smart-campus-companion-ccb0e.firebaseapp.com",
   projectId: "smart-campus-companion-ccb0e",
-  storageBucket: "smart-campus-companion-ccb0e.firebasestorage.app",
+  storageBucket: "smart-campus-companion-ccb0e.appspot.com",
   messagingSenderId: "406384941875",
   appId: "1:406384941875:web:616f09105c43f98a527c46"
 };

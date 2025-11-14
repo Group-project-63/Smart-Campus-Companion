@@ -1,22 +1,17 @@
 // src/pages/Home.js
 import React, { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSearch } from "../context/SearchContext";
 
 const Home = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const { setScope } = useSearch();
-  const navigate = useNavigate();
 
   useEffect(() => {
     setScope("all");
   }, [setScope]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
-  };
 
   const prettyName =
     user?.displayName || (user?.email ? user.email.split("@")[0] : "") || "User";
@@ -55,13 +50,6 @@ const Home = () => {
           <Card to="/announcements" emoji="📢" title="Announcements" desc="Latest updates from campus." />
           <Card to="/profile" emoji="👤" title="Profile" desc="Set department/year for tailored info." />
           <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />
-        </div>
-
-        {/* Logout button */}
-        <div style={{ marginTop: 20 }}>
-          <button type="button" onClick={handleLogout} style={styles.logoutBtn}>
-            Log Out
-          </button>
         </div>
       </section>
     </div>
