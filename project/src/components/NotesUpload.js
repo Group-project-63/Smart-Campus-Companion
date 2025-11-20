@@ -1,6 +1,6 @@
 // src/components/NotesUpload.js (simple version)
 import React, { useState } from 'react';
-import { useSearch } from '../context/SearchContext';
+// import { useSearch } from '../context/SearchContext';
 
 export default function NotesUpload() {
   const [file, setFile] = useState(null);
