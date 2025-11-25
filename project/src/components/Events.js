@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { db } from '../services/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { supabase } from '../services/supabase';
 import { useSearch } from '../context/SearchContext';
 import useDebounce from '../hooks/useDebounce';
 import './Events.css';
@@ -16,9 +15,13 @@ const Events = () => {
   const q = useDebounce(query.toLowerCase().trim(), 200);
 
   const fetchEvents = async () => {
-    const querySnapshot = await getDocs(collection(db, 'events'));
-    const data = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    setEvents(data);
+    try {
+      const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (err) {
+      console.error('fetchEvents failed:', err);
+    }
   };
 
   useEffect(() => {
@@ -31,7 +34,12 @@ const Events = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    await addDoc(collection(db, 'events'), formData);
+    try {
+      const { error } = await supabase.from('events').insert({ ...formData, created_at: new Date().toISOString() });
+      if (error) throw error;
+    } catch (err) {
+      console.error('add event failed:', err);
+    }
     setFormData({ title: '', date: '', description: '' });
     fetchEvents();
   };
@@ -46,8 +54,12 @@ const Events = () => {
   };
 
   const saveEdit = async () => {
-    const ref = doc(db, 'events', editingId);
-    await updateDoc(ref, editData);
+    try {
+      const { error } = await supabase.from('events').update(editData).eq('id', editingId);
+      if (error) throw error;
+    } catch (err) {
+      console.error('saveEdit failed:', err);
+    }
     setEditingId(null);
     setEditData({ title: '', date: '', description: '' });
     fetchEvents();
@@ -59,7 +71,12 @@ const Events = () => {
   };
 
   const removeEvent = async id => {
-    await deleteDoc(doc(db, 'events', id));
+    try {
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('removeEvent failed:', err);
+    }
     fetchEvents();
   };
 

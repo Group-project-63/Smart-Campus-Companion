@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../services/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { supabase } from "../services/supabase";
 
 const AuthContext = createContext();
 
@@ -11,20 +9,28 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user || null);
+    // Supabase auth state change
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user ?? null;
+      setCurrentUser(user);
 
       if (user) {
         try {
-          // Make sure the path matches your Firestore (users vs Users)
-          const userRef = doc(db, "users", user.uid);
-          const snap = await getDoc(userRef);
-          const data = snap.exists() ? snap.data() : null;
-
-          // Expect role field to be exactly "admin"
-          setIsAdmin(data?.role === "admin");
+          // read user profile from `users` table (expects a table named `users` with id = auth user id)
+          const { data, error } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", user.id)
+            .limit(1)
+            .single();
+          if (error) {
+            console.error("Failed reading user role from Supabase:", error);
+            setIsAdmin(false);
+          } else {
+            setIsAdmin(data?.role === "admin");
+          }
         } catch (e) {
-          console.error("Failed reading user role from Firestore:", e);
+          console.error("Failed reading user role from Supabase:", e);
           setIsAdmin(false);
         }
       } else {
@@ -34,12 +40,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    return () => unsub();
+    return () => listener?.unsubscribe && listener.unsubscribe();
   }, []);
 
   const logout = async () => {
-    const { signOut } = await import("firebase/auth");
-    await signOut(auth);
+    await supabase.auth.signOut();
     setCurrentUser(null);
     setIsAdmin(false);
   };

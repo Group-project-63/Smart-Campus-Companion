@@ -38,7 +38,7 @@ export default function AppLayout() {
 
           {/* User + Logout */}
           <span style={styles.userText}>
-            {currentUser?.displayName || currentUser?.email?.split("@")[0] || "User"}
+            {currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "User"}
           </span>
           <button type="button" onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
         </div>

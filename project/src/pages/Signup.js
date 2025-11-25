@@ -1,17 +1,9 @@
 // src/pages/Signup.js
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../services/firebase";
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  signInWithPopup,
-  sendEmailVerification,
-} from "firebase/auth";
+import { supabase } from "../services/supabase";
 
-// ⬇️ Firestore imports
-import { db } from "../services/firebase";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+// We will store user profiles in the `users` table in Supabase (id = auth user id)
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -31,17 +23,25 @@ export default function Signup() {
   };
 
   const ensureUserProfile = async (user, nameOverride) => {
-    // Create the user doc only if it doesn't exist yet
-    const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
-      await setDoc(userRef, {
-        uid: user.uid,
-        name: nameOverride || user.displayName || "",
-        email: user.email,
-        role: "student",           // default; can promote to 'admin' manually later
-        createdAt: serverTimestamp(),
-      });
+    // Create the user record only if it doesn't exist yet
+    try {
+      const { data: existing, error: selErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", user.id)
+        .limit(1)
+        .single();
+      if (!existing) {
+        await supabase.from("users").insert({
+          id: user.id,
+          name: nameOverride || user.user_metadata?.full_name || user.email || "",
+          email: user.email,
+          role: "student",
+          created_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.error("Failed ensureUserProfile:", e);
     }
   };
 
@@ -54,23 +54,24 @@ export default function Signup() {
     try {
       setBusy(true);
 
-      // 1) Create auth user
-      const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      // 1) Create auth user in Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { full_name: form.name } },
+      });
+      if (error) throw error;
 
-      // 2) Update display name
-      await updateProfile(cred.user, { displayName: form.name });
+      // 2) Create user profile row
+      if (data?.user) {
+        await ensureUserProfile(data.user, form.name);
+      }
 
-      // 3) Create Firestore user profile
-      await ensureUserProfile(cred.user, form.name);
-
-      // 4) Send verification email (optional but recommended)
-      await sendEmailVerification(cred.user);
-
-      // 5) Navigate to verify page (remove duplicate navigate)
+      // Supabase typically handles email confirmations automatically when enabled
       navigate("/verify-email");
     } catch (err) {
       console.error(err);
-      setError(mapFirebaseAuthError(err));
+      setError(mapAuthError(err));
     } finally {
       setBusy(false);
     }
@@ -79,17 +80,11 @@ export default function Signup() {
   const handleGoogle = async () => {
     try {
       setBusy(true);
-      const cred = await signInWithPopup(auth, googleProvider);
-
-      // Create Firestore user profile for Google users too
-      await ensureUserProfile(cred.user);
-
-      // If you want to require verification for Google, skip this:
-      // (Google accounts are typically already verified by provider.)
-      navigate("/");
+      await supabase.auth.signInWithOAuth({ provider: "google" });
+      // OAuth will redirect — after redirect the AuthContext listener will create profile row if needed
     } catch (err) {
       console.error(err);
-      setError(mapFirebaseAuthError(err));
+      setError(mapAuthError(err));
     } finally {
       setBusy(false);
     }
@@ -146,13 +141,16 @@ export default function Signup() {
   );
 }
 
-function mapFirebaseAuthError(err) {
+function mapAuthError(err) {
+  if (!err) return "Something went wrong. Please try again.";
+  const msg = err?.message || err?.error_description || "";
   const code = err?.code || "";
-  if (code.includes("email-already-in-use")) return "Email already in use.";
-  if (code.includes("invalid-email")) return "Invalid email.";
-  if (code.includes("weak-password")) return "Password is too weak.";
-  if (code.includes("popup-closed-by-user")) return "Google popup closed. Try again.";
-  return "Something went wrong. Please try again.";
+  if (msg.toLowerCase().includes("already registered") || code.includes("email-already-in-use")) return "Email already in use.";
+  if (msg.toLowerCase().includes("invalid email") || code.includes("invalid-email")) return "Invalid email.";
+  if (msg.toLowerCase().includes("weak password") || code.includes("weak-password")) return "Password is too weak.";
+  if (msg.toLowerCase().includes("email not confirmed")) return "Please check your email and click the verification link.";
+  if (code.includes("popup-closed-by-user") || msg.toLowerCase().includes("popup closed")) return "Google popup closed. Try again.";
+  return msg || "Something went wrong. Please try again.";
 }
 
 const styles = {

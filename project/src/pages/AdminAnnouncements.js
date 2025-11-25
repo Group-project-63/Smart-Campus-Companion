@@ -1,17 +1,7 @@
 // src/pages/AdminAnnouncements.js
-import { useEffect, useMemo, useState } from "react";
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-  doc,
-  deleteDoc,
-  updateDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../services/firebase";
+import { useMemo, useState } from "react";
+import useRealtimeTable from "../hooks/useRealtimeTable";
+import { supabase } from "../services/supabase";
 
 /** ---------- Small UI Primitives (Modal, Confirm, Toast) ---------- */
 function Modal({ open, onClose, title, children, footer }) {
@@ -70,9 +60,9 @@ export default function AdminAnnouncements() {
   const [dept, setDept] = useState(""); // "", "CSE", "ECE", "ME", "CE"
   const [year, setYear] = useState(""); // "", "1" | "2" | "3" | "4"
 
-  // Data
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Data (realtime)
+  const [announcements, announcementsLoaded] = useRealtimeTable("announcements", { select: "*", order: { column: "published_at", ascending: false } });
+  const loading = !announcementsLoaded;
 
   // UI state
   const [msgOpen, setMsgOpen] = useState(false);
@@ -96,25 +86,6 @@ export default function AdminAnnouncements() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  // subscribe realtime
-  useEffect(() => {
-    const qy = query(collection(db, "announcements"), orderBy("publishedAt", "desc"));
-    const unsub = onSnapshot(
-      qy,
-      (snap) => {
-        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setAnnouncements(items);
-        setLoading(false);
-      },
-      (err) => {
-        console.error(err);
-        toasty("Failed to load announcements.", "error");
-        setLoading(false);
-      }
-    );
-    return () => unsub();
-  }, []);
-
   const toasty = (text, tone = "info") => {
     setMsgText(text);
     setMsgTone(tone);
@@ -136,12 +107,13 @@ export default function AdminAnnouncements() {
       return;
     }
     try {
-      await addDoc(collection(db, "announcements"), {
+      const { error } = await supabase.from("announcements").insert({
         title: title.trim(),
         body: body.trim(),
         audience: { dept: dept || null, year: year ? Number(year) : null },
-        publishedAt: serverTimestamp(),
+        published_at: new Date().toISOString(),
       });
+      if (error) throw error;
       toasty("Announcement published.", "success");
       resetCreateForm();
     } catch (err) {
@@ -170,15 +142,13 @@ export default function AdminAnnouncements() {
       return;
     }
     try {
-      await updateDoc(doc(db, "announcements", editDoc.id), {
+      const { error } = await supabase.from("announcements").update({
         title: editTitle.trim(),
         body: editBody.trim(),
-        audience: {
-          dept: editDept || null,
-          year: editYear ? Number(editYear) : null,
-        },
-        updatedAt: serverTimestamp(),
-      });
+        audience: { dept: editDept || null, year: editYear ? Number(editYear) : null },
+        updated_at: new Date().toISOString(),
+      }).eq("id", editDoc.id);
+      if (error) throw error;
       toasty("Announcement updated.", "success");
       setEditOpen(false);
       setEditDoc(null);
@@ -197,7 +167,8 @@ export default function AdminAnnouncements() {
   const doDelete = async () => {
     if (!deleteId) return;
     try {
-      await deleteDoc(doc(db, "announcements", deleteId));
+      const { error } = await supabase.from("announcements").delete().eq("id", deleteId);
+      if (error) throw error;
       toasty("Announcement deleted.", "success");
     } catch (err) {
       console.error(err);
@@ -211,8 +182,12 @@ export default function AdminAnnouncements() {
   /** UI helpers */
   const formatTS = (ts) => {
     try {
-      const d = ts?.toDate?.();
-      return d ? d.toLocaleString() : "—";
+      // Accept Firestore Timestamp or ISO string
+      if (!ts) return "—";
+      let d = null;
+      if (ts?.toDate) d = ts.toDate();
+      else d = new Date(ts);
+      return d && !isNaN(d.getTime()) ? d.toLocaleString() : "—";
     } catch {
       return "—";
     }
@@ -364,7 +339,7 @@ export default function AdminAnnouncements() {
                         <Chip label={d.dept || "All Dept"} />
                         <Chip label={d.year != null ? `Year ${d.year}` : "All Years"} />
                         <span style={ui.metaMuted}>
-                          {a.updatedAt ? "Updated: " + formatTS(a.updatedAt) : "Published: " + formatTS(a.publishedAt)}
+                          {a.updated_at ? "Updated: " + formatTS(a.updated_at) : "Published: " + formatTS(a.published_at)}
                         </span>
                       </div>
                     </div>

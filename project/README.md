@@ -68,3 +68,23 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Supabase migration notes
+
+This project was migrated from Firebase to Supabase for auth and Postgres-backed tables. To run locally you must provide the Supabase URL and anon key via environment variables.
+
+- Create a file named `.env` at the project root (next to `package.json`) and add:
+
+```
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key
+```
+
+- Ensure the following tables exist in your Supabase project: `users`, `announcements`, `events`, `timetables` (the app expects columns like `id`, `items` JSONB on `timetables`, and timestamp columns named `created_at` / `published_at` / `updated_at`).
+
+- Storage: create a bucket named `notes` in Supabase Storage for user uploads. If you want uploaded files to be publicly accessible via `getPublicUrl`, set the bucket to public; otherwise use `createSignedUrl` when serving private files.
+
+- Run `npm install` to ensure `@supabase/supabase-js` is installed (already included in `package.json`).
+
+After configuring env vars you can run the app with `npm start`.
+

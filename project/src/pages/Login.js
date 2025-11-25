@@ -1,8 +1,7 @@
 // src/pages/Login.js
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { auth, googleProvider } from "../services/firebase";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { supabase } from "../services/supabase";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,11 +24,20 @@ export default function Login() {
 
     try {
       setBusy(true);
-      await signInWithEmailAndPassword(auth, form.email, form.password);
+      const { data, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+      if (error) {
+        // Check if error is due to unconfirmed email
+        if (error.message?.toLowerCase().includes("email not confirmed")) {
+          // Allow proceeding to verify page
+          navigate("/verify-email", { replace: true });
+          return;
+        }
+        throw error;
+      }
       navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error(err);
-      setError(mapFirebaseAuthError(err));
+      setError(mapAuthError(err));
     } finally {
       setBusy(false);
     }
@@ -38,11 +46,12 @@ export default function Login() {
   const handleGoogle = async () => {
     try {
       setBusy(true);
-      await signInWithPopup(auth, googleProvider);
+      // Trigger OAuth redirect for Google
+      await supabase.auth.signInWithOAuth({ provider: "google" });
       navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error(err);
-      setError(mapFirebaseAuthError(err));
+      setError(mapAuthError(err));
     } finally {
       setBusy(false);
     }
@@ -92,13 +101,20 @@ export default function Login() {
   );
 }
 
-function mapFirebaseAuthError(err) {
+function mapAuthError(err) {
+  if (!err) return "Unable to sign in. Please try again.";
+  const msg = err?.message || err?.error_description || err?.status || "";
   const code = err?.code || "";
+  if (msg && typeof msg === "string") {
+    if (msg.toLowerCase().includes("email not confirmed")) return "Email not confirmed. Please verify your email first.";
+    if (msg.toLowerCase().includes("invalid credentials") || msg.toLowerCase().includes("invalid login credentials")) return "Incorrect email or password.";
+    if (msg.toLowerCase().includes("user not found")) return "No user found with this email.";
+    if (msg.toLowerCase().includes("invalid email")) return "Invalid email.";
+  }
   if (code.includes("user-not-found")) return "No user found with this email.";
   if (code.includes("wrong-password")) return "Incorrect password.";
   if (code.includes("invalid-email")) return "Invalid email.";
-  if (code.includes("too-many-requests")) return "Too many attempts. Try again later.";
-  return "Unable to sign in. Please try again.";
+  return msg || "Unable to sign in. Please try again.";
 }
 
 const styles = {

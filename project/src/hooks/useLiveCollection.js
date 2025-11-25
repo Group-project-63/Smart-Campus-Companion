@@ -1,16 +1,24 @@
 // src/hooks/useLiveCollection.js
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { supabase } from "../services/supabase";
 
 export default function useLiveCollection(path, orderField = "createdAt", direction = "desc") {
   const [items, setItems] = useState([]);
   useEffect(() => {
-    const q = query(collection(db, path), orderBy(orderField, direction));
-    const unsub = onSnapshot(q, snap => {
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    return () => unsub();
+    let mounted = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from(path)
+          .select("*")
+          .order(orderField, { ascending: direction === "asc" });
+        if (error) throw error;
+        if (mounted) setItems(data || []);
+      } catch (err) {
+        console.error("useLiveCollection fetch failed:", err);
+      }
+    })();
+    return () => { mounted = false; };
   }, [path, orderField, direction]);
   return items;
 }

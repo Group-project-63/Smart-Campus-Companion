@@ -1,8 +1,7 @@
 // src/pages/ResetPassword.js
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../services/firebase";
+import { supabase } from "../services/supabase";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -15,7 +14,8 @@ export default function ResetPassword() {
     setErr(""); setMsg("");
     if (!/^\S+@\S+\.\S+$/.test(email)) return setErr("Enter a valid email.");
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
       setMsg("Reset link sent. Check your inbox.");
     } catch (error) {
       setErr(error?.message || "Failed to send reset email.");

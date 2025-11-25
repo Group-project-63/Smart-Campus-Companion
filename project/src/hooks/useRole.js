@@ -1,7 +1,6 @@
 // src/hooks/useRole.js
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 
 export default function useRole() {
@@ -10,10 +9,16 @@ export default function useRole() {
   useEffect(() => {
     let active = true;
     if (!user) return;
-    getDoc(doc(db, "users", user.uid)).then(snap => {
-      if (!active) return;
-      setRole(snap.data()?.role || "student");
-    });
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("users").select("role").eq("id", user.id).limit(1).single();
+        if (error) throw error;
+        if (!active) return;
+        setRole(data?.role || "student");
+      } catch (err) {
+        console.error("useRole failed:", err);
+      }
+    })();
     return () => { active = false; };
   }, [user]);
   return role;

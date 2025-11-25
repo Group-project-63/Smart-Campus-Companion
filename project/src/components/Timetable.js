@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { db } from "../services/firebase";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 import "./Timetable.css";
 
@@ -12,7 +11,6 @@ export default function Timetable() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     title: "",
-    day: "Mon",
     date: "",
     start: "09:00",
     end: "10:00",
@@ -21,10 +19,16 @@ export default function Timetable() {
 
   useEffect(() => {
     if (!user) return;
-    const ref = doc(db, "timetables", user.uid);
-    getDoc(ref)
-      .then((snap) => setItems(snap.exists() ? snap.data().items || [] : []))
-      .catch((err) => setError(err.message));
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("timetables").select("items").eq("id", user.id).limit(1).single();
+        if (error && error.code !== "PGRST116") throw error;
+        setItems(data?.items || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load timetable.");
+      }
+    })();
   }, [user]);
 
   const addSlot = async (e) => {
@@ -32,26 +36,28 @@ export default function Timetable() {
     setError("");
     if (!user) return setError("You must be logged in.");
 
-    const ref = doc(db, "timetables", user.uid);
     const slot = { ...form };
 
     try {
       setBusy(true);
-      const current = await getDoc(ref);
-      if (!current.exists()) {
-        await setDoc(ref, {
-          ownerUid: user.uid,
-          items: [slot],
-          updatedAt: new Date()
-        });
+      // upsert timetables row (id = user.id)
+      const { data, error } = await supabase
+        .from("timetables")
+        .select("items")
+        .eq("id", user.id)
+        .limit(1)
+        .single();
+
+      if (!data) {
+        const { error: insErr } = await supabase.from("timetables").insert({ id: user.id, owner_uid: user.id, items: [slot], updated_at: new Date().toISOString() });
+        if (insErr) throw insErr;
       } else {
-        await updateDoc(ref, {
-          items: arrayUnion(slot),
-          updatedAt: new Date()
-        });
+        const nextItems = [...(data.items || []), slot];
+        const { error: updErr } = await supabase.from("timetables").update({ items: nextItems, updated_at: new Date().toISOString() }).eq("id", user.id);
+        if (updErr) throw updErr;
       }
       setItems((prev) => [...prev, slot]);
-      setForm({ title: "", day: "Mon", date: "", start: "09:00", end: "10:00", room: "" });
+      setForm({ title: "", date: "", start: "09:00", end: "10:00", room: "" });
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to save timetable.");
@@ -62,10 +68,10 @@ export default function Timetable() {
 
   const removeSlot = async (index) => {
     if (!user) return setError("You must be logged in.");
-    const ref = doc(db, "timetables", user.uid);
     const next = items.filter((_, i) => i !== index);
     try {
-      await updateDoc(ref, { items: next, updatedAt: new Date() });
+      const { error } = await supabase.from("timetables").update({ items: next, updated_at: new Date().toISOString() }).eq("id", user.id);
+      if (error) throw error;
       setItems(next);
     } catch (err) {
       console.error(err);
@@ -75,10 +81,10 @@ export default function Timetable() {
 
   const updateSlot = async (index, updated) => {
     if (!user) return setError("You must be logged in.");
-    const ref = doc(db, "timetables", user.uid);
     const next = items.map((it, i) => (i === index ? { ...it, ...updated } : it));
     try {
-      await updateDoc(ref, { items: next, updatedAt: new Date() });
+      const { error } = await supabase.from("timetables").update({ items: next, updated_at: new Date().toISOString() }).eq("id", user.id);
+      if (error) throw error;
       setItems(next);
     } catch (err) {
       console.error(err);
@@ -87,7 +93,7 @@ export default function Timetable() {
   };
 
   const [editingIndex, setEditingIndex] = useState(null);
-  const [edit, setEdit] = useState({ title: "", day: "Mon", date: "", start: "", end: "", room: "" });
+  const [edit, setEdit] = useState({ title: "", date: "", start: "", end: "", room: "" });
 
   const startEdit = (idx) => {
     const it = items[idx];
@@ -96,7 +102,7 @@ export default function Timetable() {
   };
   const cancelEdit = () => {
     setEditingIndex(null);
-    setEdit({ title: "", day: "Mon", date: "", start: "", end: "", room: "" });
+    setEdit({ title: "", date: "", start: "", end: "", room: "" });
   };
   const saveEdit = async () => {
     await updateSlot(editingIndex, edit);
@@ -111,11 +117,6 @@ export default function Timetable() {
       {/* Add Slot Form */}
       <form onSubmit={addSlot} className="timetable-form">
         <input placeholder="Course/Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-        <select value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value })}>
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
         <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
         <div className="time-inputs">
           <input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
@@ -132,11 +133,6 @@ export default function Timetable() {
             {editingIndex === idx ? (
               <div className="edit-form">
                 <input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} />
-                <select value={edit.day} onChange={(e) => setEdit({ ...edit, day: e.target.value })}>
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
                 <input type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
                 <input type="time" value={edit.start} onChange={(e) => setEdit({ ...edit, start: e.target.value })} />
                 <input type="time" value={edit.end} onChange={(e) => setEdit({ ...edit, end: e.target.value })} />
@@ -148,7 +144,7 @@ export default function Timetable() {
               </div>
             ) : (
               <div className="slot-info">
-                <strong>{it.title}</strong> — {it.day}, {it.date} {it.start}-{it.end} ({it.room})
+                <strong>{it.title}</strong> — {it.date} {it.start}-{it.end} ({it.room})
                 <div className="actions">
                   <button className="edit-btn" onClick={() => startEdit(idx)}>Edit</button>
                   <button className="delete-btn" onClick={() => removeSlot(idx)}>Delete</button>

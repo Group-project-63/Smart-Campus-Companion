@@ -14,7 +14,7 @@ const Home = () => {
 
 
   const prettyName =
-    user?.displayName || (user?.email ? user.email.split("@")[0] : "") || "User";
+    user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : "") || "User";
 
   return (
     <div style={styles.page}>

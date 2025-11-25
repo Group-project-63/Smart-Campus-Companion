@@ -1,8 +1,7 @@
 // src/pages/Profile.js
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../services/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { supabase } from "../services/supabase";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -12,21 +11,29 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, "users", user.uid)).then(s => {
-      const d = s.data() || {};
-      setDept(d.dept || "");
-      setYear(d.year ? String(d.year) : "");
-    });
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("users").select("dept, year").eq("id", user.id).limit(1).single();
+        if (error) throw error;
+        const d = data || {};
+        setDept(d.dept || "");
+        setYear(d.year ? String(d.year) : "");
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    })();
   }, [user]);
 
   const save = async (e) => {
     e.preventDefault();
     setMsg("");
     try {
-      await updateDoc(doc(db, "users", user.uid), {
+      const updates = {
         dept: dept || null,
         year: year ? Number(year) : null,
-      });
+      };
+      const { error } = await supabase.from("users").update(updates).eq("id", user.id);
+      if (error) throw error;
       setMsg("Profile updated.");
     } catch (err) {
       setMsg("Failed: " + (err?.message || "unknown error"));
