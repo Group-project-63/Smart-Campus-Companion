@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSearch } from "../context/SearchContext";
+import MiniCalendar from "../components/MiniCalendar";
 
 const Home = () => {
   const { user, loading } = useAuth();
@@ -52,6 +53,11 @@ const Home = () => {
           <Card to="/profile" emoji="👤" title="Profile" desc="Set department/year for tailored info." />
           <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />
         </div>
+      </section>
+
+      <section style={{ marginTop: 18 }}>
+        <h2 style={styles.sectionTitle}>Calendar</h2>
+        <MiniCalendar />
       </section>
     </div>
   );

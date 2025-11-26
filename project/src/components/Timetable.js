@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "../context/AuthContext";
 import "./Timetable.css";
+import { useLocation } from 'react-router-dom';
 
 export default function Timetable() {
   const { user } = useAuth();
@@ -16,6 +17,11 @@ export default function Timetable() {
     end: "10:00",
     room: ""
   });
+
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const dateParam = params.get('date');
+  const filteredItems = dateParam ? items.filter((it) => it.date === dateParam) : items;
 
   useEffect(() => {
     if (!user) return;
@@ -111,7 +117,7 @@ export default function Timetable() {
 
   return (
     <div className="timetable-container">
-      <h2 className="heading">Your Timetable</h2>
+      <h2 className="heading">Your Timetable{dateParam ? ` — ${dateParam}` : ''}</h2>
       {error && <p className="error">{error}</p>}
 
       {/* Add Slot Form */}
@@ -128,7 +134,7 @@ export default function Timetable() {
 
       {/* Timetable List */}
       <div className="timetable-list">
-        {items.map((it, idx) => (
+        {filteredItems.map((it, idx) => (
           <div key={idx} className="slot-card">
             {editingIndex === idx ? (
               <div className="edit-form">
