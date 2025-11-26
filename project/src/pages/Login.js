@@ -24,7 +24,7 @@ export default function Login() {
 
     try {
       setBusy(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+      const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
       if (error) {
         // Check if error is due to unconfirmed email
         if (error.message?.toLowerCase().includes("email not confirmed")) {

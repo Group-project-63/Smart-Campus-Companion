@@ -25,7 +25,7 @@ export default function Signup() {
   const ensureUserProfile = async (user, nameOverride) => {
     // Create the user record only if it doesn't exist yet
     try {
-      const { data: existing, error: selErr } = await supabase
+      const { data: existing } = await supabase
         .from("users")
         .select("id")
         .eq("id", user.id)

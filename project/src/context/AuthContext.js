@@ -9,7 +9,49 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Supabase auth state change
+    // Read current session once on mount so we don't hang on `loading`
+    let mounted = true;
+
+    async function loadInitialSession() {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.data?.session?.user ?? null;
+        if (!mounted) return;
+        setCurrentUser(user);
+
+        if (user) {
+          try {
+            const { data, error } = await supabase
+              .from("users")
+              .select("role")
+              .eq("id", user.id)
+              .limit(1)
+              .single();
+            if (error) {
+              console.error("Failed reading user role from Supabase:", error);
+              setIsAdmin(false);
+            } else {
+              setIsAdmin(data?.role === "admin");
+            }
+          } catch (e) {
+            console.error("Failed reading user role from Supabase:", e);
+            setIsAdmin(false);
+          }
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (e) {
+        console.error("Failed getting initial session from Supabase:", e);
+        setCurrentUser(null);
+        setIsAdmin(false);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    loadInitialSession();
+
+    // Supabase auth state change listener - keeps context in sync after mount
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user ?? null;
       setCurrentUser(user);
@@ -37,10 +79,14 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
       }
 
+      // ensure the loading flag is turned off after real auth changes too
       setLoading(false);
     });
 
-    return () => listener?.unsubscribe && listener.unsubscribe();
+    return () => {
+      mounted = false;
+      listener?.unsubscribe && listener.unsubscribe();
+    };
   }, []);
 
   const logout = async () => {
