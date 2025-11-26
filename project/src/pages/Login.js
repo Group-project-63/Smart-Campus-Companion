@@ -25,15 +25,8 @@ export default function Login() {
     try {
       setBusy(true);
       const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
-      if (error) {
-        // Check if error is due to unconfirmed email
-        if (error.message?.toLowerCase().includes("email not confirmed")) {
-          // Allow proceeding to verify page
-          navigate("/verify-email", { replace: true });
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
+      // Instantly navigate after successful login
       navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error(err);

@@ -5,24 +5,11 @@ import { useState } from "react";
 
 export default function AppLayout() {
   const { user: currentUser, isAdmin, logout } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
   const handleLogout = async (e) => {
     e.preventDefault();
-    if (isLoggingOut) return;
-    
-    setIsLoggingOut(true);
-    try {
-      console.log("🔓 Starting logout...");
-      await logout();
-      console.log("✅ Logout successful");
-      // Force navigation to login
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("❌ Logout error:", error);
-      // Even on error, force redirect
-      window.location.href = "/login";
-    }
+    // Immediately clear state and redirect
+    logout();
+    window.location.href = "/login";
   };
 
   return (
@@ -56,15 +43,10 @@ export default function AppLayout() {
           </span>
           <button 
             type="button" 
-            onClick={handleLogout} 
-            disabled={isLoggingOut}
-            style={{
-              ...styles.logoutBtn,
-              opacity: isLoggingOut ? 0.6 : 1,
-              cursor: isLoggingOut ? "not-allowed" : "pointer",
-            }}
+            onClick={handleLogout}
+            style={styles.logoutBtn}
           >
-            {isLoggingOut ? "Logging out..." : "Logout"}
+            Logout
           </button>
         </div>
       </header>

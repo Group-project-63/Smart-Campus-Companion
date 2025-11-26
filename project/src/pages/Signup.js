@@ -67,8 +67,8 @@ export default function Signup() {
         await ensureUserProfile(data.user, form.name);
       }
 
-      // Supabase typically handles email confirmations automatically when enabled
-      navigate("/verify-email");
+      // Directly redirect to login page after signup
+      navigate("/login");
     } catch (err) {
       console.error(err);
       setError(mapAuthError(err));

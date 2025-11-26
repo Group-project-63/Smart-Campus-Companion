@@ -16,9 +16,7 @@ export const AuthProvider = ({ children }) => {
     async function loadInitialSession() {
       try {
         console.log("🔄 Loading initial session...");
-        
         const { data, error } = await supabase.auth.getSession();
-        
         if (error) {
           console.error("❌ Error getting session:", error);
           if (mounted) {
@@ -28,30 +26,30 @@ export const AuthProvider = ({ children }) => {
         } else {
           const user = data?.session?.user ?? null;
           console.log("👤 Session user:", user ? user.email : "null");
-          
           if (mounted) {
             setCurrentUser(user);
-            
-            // Fetch admin role if user exists
+            setLoading(false); // UI loads instantly after session
+            initialLoadDone = true;
+            // Fetch admin role in background
             if (user) {
-              try {
-                const { data: roleData, error: roleError } = await supabase
-                  .from("users")
-                  .select("role")
-                  .eq("id", user.id)
-                  .limit(1)
-                  .single();
-                
-                if (!roleError && mounted) {
-                  setIsAdmin(roleData?.role === "admin");
-                  console.log("✅ Admin status:", roleData?.role === "admin");
-                } else {
+              supabase
+                .from("users")
+                .select("role")
+                .eq("id", user.id)
+                .limit(1)
+                .single()
+                .then(({ data: roleData, error: roleError }) => {
+                  if (!roleError && mounted) {
+                    setIsAdmin(roleData?.role === "admin");
+                    console.log("✅ Admin status:", roleData?.role === "admin");
+                  } else if (mounted) {
+                    setIsAdmin(false);
+                  }
+                })
+                .catch((e) => {
+                  console.error("Error fetching user role:", e);
                   if (mounted) setIsAdmin(false);
-                }
-              } catch (e) {
-                console.error("Error fetching user role:", e);
-                if (mounted) setIsAdmin(false);
-              }
+                });
             } else {
               setIsAdmin(false);
             }
@@ -62,12 +60,8 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           setCurrentUser(null);
           setIsAdmin(false);
-        }
-      } finally {
-        if (mounted) {
-          initialLoadDone = true;
-          console.log("🛑 Initial load complete, setting loading to false");
           setLoading(false);
+          initialLoadDone = true;
         }
       }
     }
@@ -90,32 +84,28 @@ export const AuthProvider = ({ children }) => {
       
       if (mounted) {
         setCurrentUser(user);
-        
+        setLoading(false); // UI loads instantly after auth change
+        // Fetch admin role in background
         if (user) {
-          try {
-            const { data: roleData, error: roleError } = await supabase
-              .from("users")
-              .select("role")
-              .eq("id", user.id)
-              .limit(1)
-              .single();
-            
-            if (!roleError && mounted) {
-              setIsAdmin(roleData?.role === "admin");
-            } else {
+          supabase
+            .from("users")
+            .select("role")
+            .eq("id", user.id)
+            .limit(1)
+            .single()
+            .then(({ data: roleData, error: roleError }) => {
+              if (!roleError && mounted) {
+                setIsAdmin(roleData?.role === "admin");
+              } else if (mounted) {
+                setIsAdmin(false);
+              }
+            })
+            .catch((e) => {
+              console.error("Error fetching user role on auth change:", e);
               if (mounted) setIsAdmin(false);
-            }
-          } catch (e) {
-            console.error("Error fetching user role on auth change:", e);
-            if (mounted) setIsAdmin(false);
-          }
+            });
         } else {
-          if (mounted) setIsAdmin(false);
-        }
-        
-        // Only set loading to false if it's still true (in case auth state changes during initial load)
-        if (initialLoadDone) {
-          setLoading(false);
+          setIsAdmin(false);
         }
       }
     });
