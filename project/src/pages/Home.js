@@ -27,7 +27,7 @@ const Home = () => {
           </p>
           <div style={styles.userInfo}>
             {loading ? (
-              <span>Loading user…</span>
+              <span style={{color: '#ef4444'}}>Loading user… (if this takes too long, please refresh the page)</span>
             ) : (
               <>
                 <span>Signed in as </span>

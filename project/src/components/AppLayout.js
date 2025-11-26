@@ -1,14 +1,28 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import SearchBar from "../components/SearchBar"; // <-- import the search bar
+import SearchBar from "../components/SearchBar";
+import { useState } from "react";
 
 export default function AppLayout() {
   const { user: currentUser, isAdmin, logout } = useAuth();
-  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    if (isLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    try {
+      console.log("🔓 Starting logout...");
+      await logout();
+      console.log("✅ Logout successful");
+      // Force navigation to login
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+      // Even on error, force redirect
+      window.location.href = "/login";
+    }
   };
 
   return (
@@ -40,7 +54,18 @@ export default function AppLayout() {
           <span style={styles.userText}>
             {currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "User"}
           </span>
-          <button type="button" onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
+          <button 
+            type="button" 
+            onClick={handleLogout} 
+            disabled={isLoggingOut}
+            style={{
+              ...styles.logoutBtn,
+              opacity: isLoggingOut ? 0.6 : 1,
+              cursor: isLoggingOut ? "not-allowed" : "pointer",
+            }}
+          >
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
         </div>
       </header>
 

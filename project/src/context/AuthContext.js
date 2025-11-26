@@ -9,93 +9,139 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Read current session once on mount so we don't hang on `loading`
+    // Read current session once on mount
     let mounted = true;
+    let initialLoadDone = false;
 
     async function loadInitialSession() {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.data?.session?.user ?? null;
-        if (!mounted) return;
-        setCurrentUser(user);
+        console.log("🔄 Loading initial session...");
+        
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("❌ Error getting session:", error);
+          if (mounted) {
+            setCurrentUser(null);
+            setIsAdmin(false);
+          }
+        } else {
+          const user = data?.session?.user ?? null;
+          console.log("👤 Session user:", user ? user.email : "null");
+          
+          if (mounted) {
+            setCurrentUser(user);
+            
+            // Fetch admin role if user exists
+            if (user) {
+              try {
+                const { data: roleData, error: roleError } = await supabase
+                  .from("users")
+                  .select("role")
+                  .eq("id", user.id)
+                  .limit(1)
+                  .single();
+                
+                if (!roleError && mounted) {
+                  setIsAdmin(roleData?.role === "admin");
+                  console.log("✅ Admin status:", roleData?.role === "admin");
+                } else {
+                  if (mounted) setIsAdmin(false);
+                }
+              } catch (e) {
+                console.error("Error fetching user role:", e);
+                if (mounted) setIsAdmin(false);
+              }
+            } else {
+              setIsAdmin(false);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("❌ Failed loading initial session:", e);
+        if (mounted) {
+          setCurrentUser(null);
+          setIsAdmin(false);
+        }
+      } finally {
+        if (mounted) {
+          initialLoadDone = true;
+          console.log("🛑 Initial load complete, setting loading to false");
+          setLoading(false);
+        }
+      }
+    }
 
+    // Always complete initial load within 5 seconds
+    const initialLoadTimeout = setTimeout(() => {
+      if (!initialLoadDone && mounted) {
+        console.warn("⏱️ Initial session load timed out");
+        setLoading(false);
+        initialLoadDone = true;
+      }
+    }, 5000);
+
+    loadInitialSession();
+
+    // Set up auth state listener for changes AFTER initial load
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔔 Auth state changed:", event);
+      const user = session?.user ?? null;
+      
+      if (mounted) {
+        setCurrentUser(user);
+        
         if (user) {
           try {
-            const { data, error } = await supabase
+            const { data: roleData, error: roleError } = await supabase
               .from("users")
               .select("role")
               .eq("id", user.id)
               .limit(1)
               .single();
-            if (error) {
-              console.error("Failed reading user role from Supabase:", error);
-              setIsAdmin(false);
+            
+            if (!roleError && mounted) {
+              setIsAdmin(roleData?.role === "admin");
             } else {
-              setIsAdmin(data?.role === "admin");
+              if (mounted) setIsAdmin(false);
             }
           } catch (e) {
-            console.error("Failed reading user role from Supabase:", e);
-            setIsAdmin(false);
+            console.error("Error fetching user role on auth change:", e);
+            if (mounted) setIsAdmin(false);
           }
         } else {
-          setIsAdmin(false);
+          if (mounted) setIsAdmin(false);
         }
-      } catch (e) {
-        console.error("Failed getting initial session from Supabase:", e);
-        setCurrentUser(null);
-        setIsAdmin(false);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    loadInitialSession();
-
-    // Supabase auth state change listener - keeps context in sync after mount
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user ?? null;
-      setCurrentUser(user);
-
-      if (user) {
-        try {
-          // read user profile from `users` table (expects a table named `users` with id = auth user id)
-          const { data, error } = await supabase
-            .from("users")
-            .select("role")
-            .eq("id", user.id)
-            .limit(1)
-            .single();
-          if (error) {
-            console.error("Failed reading user role from Supabase:", error);
-            setIsAdmin(false);
-          } else {
-            setIsAdmin(data?.role === "admin");
-          }
-        } catch (e) {
-          console.error("Failed reading user role from Supabase:", e);
-          setIsAdmin(false);
+        
+        // Only set loading to false if it's still true (in case auth state changes during initial load)
+        if (initialLoadDone) {
+          setLoading(false);
         }
-      } else {
-        setIsAdmin(false);
       }
-
-      // ensure the loading flag is turned off after real auth changes too
-      setLoading(false);
     });
 
     return () => {
       mounted = false;
-      listener?.unsubscribe && listener.unsubscribe();
+      clearTimeout(initialLoadTimeout);
+      authListener?.unsubscribe?.();
     };
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log("🔓 Calling supabase.auth.signOut()...");
+      await supabase.auth.signOut();
+      console.log("✅ Supabase signOut successful");
+    } catch (e) {
+      console.error("❌ Error during signOut:", e);
+    }
+    
+    // Always clear local state immediately
+    console.log("Clearing local auth state...");
     setCurrentUser(null);
     setIsAdmin(false);
   };
 
-  // We expose `user` alias so your components using `user` keep working
   const value = { currentUser, user: currentUser, isAdmin, loading, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
