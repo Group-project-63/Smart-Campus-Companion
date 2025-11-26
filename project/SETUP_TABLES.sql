@@ -51,6 +51,20 @@ CREATE TABLE IF NOT EXISTS public.notes (
   created_at timestamptz DEFAULT now()
 );
 
+-- 6. Grades table
+CREATE TABLE IF NOT EXISTS public.grades (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+  course_code text NOT NULL,
+  assignment text,
+  score numeric,
+  max_score numeric,
+  grade text,
+  semester text,
+  created_at timestamptz DEFAULT now(),
+  uploaded_by uuid REFERENCES public.users(id)
+);
+
 -- Enable pgcrypto extension for UUID generation
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

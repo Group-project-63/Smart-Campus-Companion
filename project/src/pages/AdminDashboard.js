@@ -36,6 +36,12 @@ export default function AdminDashboard() {
           desc="Add or update campus events."
         />
         <Card
+          to="/admingrades"
+          icon="🧾"
+          title="Manage Grades"
+          desc="Record and manage student grades."
+        />
+        <Card
           to="/users"
           icon="👥"
           title="Manage User Roles"

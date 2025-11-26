@@ -81,6 +81,7 @@ REACT_APP_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 - Ensure the following tables exist in your Supabase project: `users`, `announcements`, `events`, `timetables` (the app expects columns like `id`, `items` JSONB on `timetables`, and timestamp columns named `created_at` / `published_at` / `updated_at`).
+Also create a `grades` table (see `SETUP_TABLES.sql`) if you want students and admins to manage course grades from the app.
 
 - Storage: create a bucket named `notes` in Supabase Storage for user uploads. If you want uploaded files to be publicly accessible via `getPublicUrl`, set the bucket to public; otherwise use `createSignedUrl` when serving private files.
 

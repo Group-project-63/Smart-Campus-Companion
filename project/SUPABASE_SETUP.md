@@ -33,6 +33,7 @@ All tables will be created automatically.
 - `events` — campus events
 - `timetables` — timetable items per user
 - `notes` — uploaded file metadata
+- `grades` — student grades and assessment records
 
 If you see errors about tables already existing, that's fine — the script uses `IF NOT EXISTS`.
 
@@ -74,6 +75,7 @@ In Supabase Dashboard:
    - `events` (for live event updates)
    - `timetables` (for live timetable updates)
    - `notes` (for live notes list)
+  - `grades` (for live grade updates, optional)
 
 This enables real-time subscriptions in the app.
 
@@ -93,6 +95,13 @@ ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "notes_user_access" ON public.notes
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- Grades access example: students can read their own grades, teachers/admin can manage
+-- ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "students_see_own_grades" ON public.grades
+--   FOR SELECT USING (auth.uid() = student_id);
+-- CREATE POLICY "staff_manage_grades" ON public.grades
+--   FOR ALL USING (EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role = 'admin'));
 ```
 
 ## Running the App

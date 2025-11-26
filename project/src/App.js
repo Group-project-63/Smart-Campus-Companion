@@ -14,6 +14,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
 import AdminEvents from "./pages/AdminEvents";
+import AdminGrades from "./pages/AdminGrades";
+import Grades from "./pages/Grades";
 
 import Timetable from "./components/Timetable";
 import Events from "./components/Events";
@@ -80,6 +82,15 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route
+                path="admingrades"
+                element={
+                  <AdminRoute>
+                    <AdminGrades />
+                  </AdminRoute>
+                }
+              />
+              <Route path="grades" element={<Grades />} />
             </Route>
 
             {/* Fallback */}

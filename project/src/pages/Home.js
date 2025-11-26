@@ -47,6 +47,7 @@ const Home = () => {
           <Card to="/events" emoji="📅" title="Events" desc="See upcoming campus activities." />
           <Card to="/map" emoji="🗺️" title="Campus Map" desc="Find buildings and facilities." />
           <Card to="/notes" emoji="📄" title="Notes Upload" desc="Upload and access your notes." />
+          <Card to="/grades" emoji="🧾" title="Grades" desc="View your course grades and assessments." />
           <Card to="/announcements" emoji="📢" title="Announcements" desc="Latest updates from campus." />
           <Card to="/profile" emoji="👤" title="Profile" desc="Set department/year for tailored info." />
           <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />
