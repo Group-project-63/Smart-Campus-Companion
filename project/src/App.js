@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
 import AdminEvents from "./pages/AdminEvents";
 import AdminGrades from "./pages/AdminGrades";
+import AdminUsers from "./pages/AdminUsers";
 import Grades from "./pages/Grades";
 
 import Timetable from "./components/Timetable";
@@ -22,6 +23,7 @@ import Events from "./components/Events";
 import NotesUpload from "./components/NotesUpload";
 import CampusMap from "./components/CampusMap";
 import Announcements from "./components/Announcements";
+import Courses from "./components/Courses";
 import Profile from "./pages/Profile";
 import Forbidden from "./pages/Forbidden";
 
@@ -55,6 +57,7 @@ function App() {
               <Route path="notes" element={<NotesUpload />} />
               <Route path="map" element={<CampusMap />} />
               <Route path="announcements" element={<Announcements />} />
+              <Route path="courses" element={<Courses />} />
               <Route path="profile" element={<Profile />} />
 
               {/* Admin pages */}
@@ -87,6 +90,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminGrades />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="adminusers"
+                element={
+                  <AdminRoute>
+                    <AdminUsers />
                   </AdminRoute>
                 }
               />

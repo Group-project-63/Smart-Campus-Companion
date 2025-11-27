@@ -107,17 +107,34 @@ export default function AdminAnnouncements() {
       return;
     }
     try {
-      const { error } = await supabase.from("announcements").insert({
+      const { data, error } = await supabase.from("announcements").insert({
         title: title.trim(),
         body: body.trim(),
         audience: { dept: dept || null, year: year ? Number(year) : null },
         published_at: new Date().toISOString(),
-      });
-      if (error) throw error;
-      toasty("Announcement published.", "success");
-      resetCreateForm();
+      }).select();
+      
+      if (error) {
+        console.error("Announcement insert error:", error);
+        // Better error message for common issues
+        if (error.message.includes("policy")) {
+          toasty("Database permission denied. Please check Row-Level Security policies.", "error");
+        } else if (error.message.includes("NOT NULL")) {
+          toasty("Title and body are required fields.", "error");
+        } else {
+          toasty(`Failed: ${error.message || "Unknown error"}`, "error");
+        }
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        toasty("✓ Announcement published and saved to database!", "success");
+        resetCreateForm();
+      } else {
+        toasty("Announcement created but verification failed.", "error");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Exception during publish:", err);
       toasty("Failed to publish. Try again.", "error");
     }
   };
@@ -142,16 +159,20 @@ export default function AdminAnnouncements() {
       return;
     }
     try {
-      const { error } = await supabase.from("announcements").update({
+      const { data, error } = await supabase.from("announcements").update({
         title: editTitle.trim(),
         body: editBody.trim(),
         audience: { dept: editDept || null, year: editYear ? Number(editYear) : null },
         updated_at: new Date().toISOString(),
-      }).eq("id", editDoc.id);
+      }).eq("id", editDoc.id).select();
       if (error) throw error;
-      toasty("Announcement updated.", "success");
-      setEditOpen(false);
-      setEditDoc(null);
+      if (data && data.length > 0) {
+        toasty("✓ Announcement updated and saved to database!", "success");
+        setEditOpen(false);
+        setEditDoc(null);
+      } else {
+        toasty("Update failed. Please try again.", "error");
+      }
     } catch (err) {
       console.error(err);
       toasty("Failed to update.", "error");
@@ -169,7 +190,7 @@ export default function AdminAnnouncements() {
     try {
       const { error } = await supabase.from("announcements").delete().eq("id", deleteId);
       if (error) throw error;
-      toasty("Announcement deleted.", "success");
+      toasty("✓ Announcement deleted from database!", "success");
     } catch (err) {
       console.error(err);
       toasty("Failed to delete.", "error");

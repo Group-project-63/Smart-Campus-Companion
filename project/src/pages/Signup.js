@@ -10,6 +10,7 @@ export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,7 +24,7 @@ export default function Signup() {
   };
 
   const ensureUserProfile = async (user, nameOverride) => {
-    // Create the user record only if it doesn't exist yet
+    // Create the user record in the database
     try {
       const { data: existing } = await supabase
         .from("users")
@@ -31,23 +32,34 @@ export default function Signup() {
         .eq("id", user.id)
         .limit(1)
         .single();
+      
       if (!existing) {
-        await supabase.from("users").insert({
+        const { error: insertError } = await supabase.from("users").insert({
           id: user.id,
           name: nameOverride || user.user_metadata?.full_name || user.email || "",
           email: user.email,
           role: "student",
           created_at: new Date().toISOString(),
         });
+        
+        if (insertError) {
+          console.error("Failed to insert user profile:", insertError);
+          throw insertError;
+        }
+        
+        return true; // Successfully created
       }
+      return false; // Already exists
     } catch (e) {
       console.error("Failed ensureUserProfile:", e);
+      throw e;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     const v = validate();
     if (v) return setError(v);
 
@@ -62,13 +74,23 @@ export default function Signup() {
       });
       if (error) throw error;
 
-      // 2) Create user profile row
+      // 2) Create user profile row in database
       if (data?.user) {
-        await ensureUserProfile(data.user, form.name);
+        const created = await ensureUserProfile(data.user, form.name);
+        if (created) {
+          setSuccess("✓ Account created successfully! User stamped in database. Redirecting to login...");
+          setTimeout(() => {
+            navigate("/login");
+          }, 1500);
+        } else {
+          setSuccess("Account created! Redirecting to login...");
+          setTimeout(() => {
+            navigate("/login");
+          }, 1000);
+        }
+      } else {
+        throw new Error("No user data returned from signup");
       }
-
-      // Directly redirect to login page after signup
-      navigate("/login");
     } catch (err) {
       console.error(err);
       setError(mapAuthError(err));
@@ -95,12 +117,13 @@ export default function Signup() {
       <form onSubmit={handleSubmit} style={styles.card}>
         <h2>Create your account</h2>
         {error && <div style={styles.error}>{error}</div>}
+        {success && <div style={styles.success}>{success}</div>}
 
         <label>Name</label>
-        <input name="name" value={form.name} onChange={handleChange} style={styles.input} />
+        <input name="name" value={form.name} onChange={handleChange} style={styles.input} placeholder="Your full name" />
 
         <label>Email</label>
-        <input name="email" type="email" value={form.email} onChange={handleChange} style={styles.input} />
+        <input name="email" type="email" value={form.email} onChange={handleChange} style={styles.input} placeholder="your@email.com" />
 
         <label>Password</label>
         <div style={{ position: "relative" }}>
@@ -110,6 +133,7 @@ export default function Signup() {
             value={form.password}
             onChange={handleChange}
             style={styles.input}
+            placeholder="At least 6 characters"
           />
           <button type="button" onClick={() => setShowPwd((s) => !s)} style={styles.eyeBtn}>
             {showPwd ? "Hide" : "Show"}
@@ -123,6 +147,7 @@ export default function Signup() {
           value={form.confirm}
           onChange={handleChange}
           style={styles.input}
+          placeholder="Confirm your password"
         />
 
         <button disabled={busy} type="submit" style={styles.primaryBtn}>
@@ -154,11 +179,12 @@ function mapAuthError(err) {
 }
 
 const styles = {
-  container: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
+  container: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)" },
   card: { width: "100%", maxWidth: 420, border: "1px solid #e5e7eb", borderRadius: 12, padding: 24, background: "#fff", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" },
   input: { width: "100%", padding: "10px 12px", marginBottom: 12, borderRadius: 8, border: "1px solid #d1d5db" },
   primaryBtn: { width: "100%", padding: "10px 12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", marginTop: 6 },
   secondaryBtn: { width: "100%", padding: "10px 12px", background: "#f3f4f6", color: "#111827", border: "1px solid #e5e7eb", borderRadius: 8, cursor: "pointer", marginTop: 8 },
   error: { background: "#fee2e2", color: "#b91c1c", padding: 10, borderRadius: 8, marginBottom: 12, border: "1px solid #fecaca" },
+  success: { background: "#dcfce7", color: "#166534", padding: 10, borderRadius: 8, marginBottom: 12, border: "1px solid #bbf7d0", fontWeight: 600 },
   eyeBtn: { position: "absolute", right: 8, top: 8, border: "none", background: "transparent", cursor: "pointer", color: "#2563eb" },
 };

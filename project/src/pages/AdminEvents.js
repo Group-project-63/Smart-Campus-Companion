@@ -102,15 +102,19 @@ export default function AdminEvents() {
       return;
     }
     try {
-      const { error } = await supabase.from("events").insert({
+      const { data, error } = await supabase.from("events").insert({
         title: title.trim(),
         date: date,
         description: description.trim(),
         created_at: new Date().toISOString(),
-      });
+      }).select();
       if (error) throw error;
-      toasty("Event created.", "success");
-      resetCreateForm();
+      if (data && data.length > 0) {
+        toasty("✓ Event created and saved to database!", "success");
+        resetCreateForm();
+      } else {
+        toasty("Event created but verification failed.", "error");
+      }
     } catch (err) {
       console.error(err);
       toasty("Failed to create event. Try again.", "error");
@@ -134,15 +138,19 @@ export default function AdminEvents() {
       return;
     }
     try {
-      const { error } = await supabase.from("events").update({
+      const { data, error } = await supabase.from("events").update({
         title: editTitle.trim(),
         date: editDate,
         description: editDescription.trim(),
-      }).eq("id", editDoc.id);
+      }).eq("id", editDoc.id).select();
       if (error) throw error;
-      toasty("Event updated.", "success");
-      setEditOpen(false);
-      setEditDoc(null);
+      if (data && data.length > 0) {
+        toasty("✓ Event updated and saved to database!", "success");
+        setEditOpen(false);
+        setEditDoc(null);
+      } else {
+        toasty("Update failed. Please try again.", "error");
+      }
     } catch (err) {
       console.error(err);
       toasty("Failed to update.", "error");
@@ -160,7 +168,7 @@ export default function AdminEvents() {
     try {
       const { error } = await supabase.from("events").delete().eq("id", deleteId);
       if (error) throw error;
-      toasty("Event deleted.", "success");
+      toasty("✓ Event deleted from database!", "success");
     } catch (err) {
       console.error(err);
       toasty("Failed to delete.", "error");

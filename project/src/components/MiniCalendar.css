@@ -16,11 +16,15 @@
 .mc-day { min-height:54px;border-radius:8px;padding:6px;cursor:pointer;position:relative;border:1px solid transparent }
 .mc-day.blank { background:transparent;border:none;cursor:default }
 .mc-day:hover { background:#f8fafc }
+.mc-day.today { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid #667eea; box-shadow: 0 0 12px rgba(102, 126, 234, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.2) }
+.mc-day.today .mc-day-num { color: #ffffff; font-weight: 700 }
+.mc-day.today::before { content: '📍'; position: absolute; top: -4px; left: 50%; transform: translateX(-50%); font-size: 14px }
 .mc-day-num { font-size:13px;font-weight:600;color:#0f172a }
 .mc-markers { position:absolute; right:8px; top:6px; display:flex; gap:6px }
 .mc-dot { width:8px;height:8px;border-radius:999px;display:inline-block }
 .mc-dot.event { background:#ef4444 } /* red = event */
 .mc-dot.slot { background:#2563eb } /* blue = timetable slot */
+.mc-day.today .mc-dot { background: #ffffff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.3) }
 .mc-day.has-event { border:1px solid rgba(239,68,68,0.12); }
 .mc-day.has-slot { border:1px solid rgba(37,99,235,0.12); }
 .mc-day.both { border:1px solid rgba(99,102,241,0.14); }

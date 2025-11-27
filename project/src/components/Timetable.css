@@ -18,6 +18,16 @@
   margin-bottom: 10px;
 }
 
+.success {
+  color: #166534;
+  background-color: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
 .timetable-form {
   display: grid;
   gap: 12px;

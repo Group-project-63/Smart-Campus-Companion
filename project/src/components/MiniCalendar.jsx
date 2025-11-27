@@ -86,6 +86,8 @@ export default function MiniCalendar() {
   const year = focused.getFullYear();
   const month = focused.getMonth();
   const days = getMonthDays(year, month);
+  const today = new Date();
+  const todayYMD = toYMD(today);
 
   const prevMonth = () => setFocused(new Date(year, month - 1, 1));
   const nextMonth = () => setFocused(new Date(year, month + 1, 1));
@@ -122,7 +124,9 @@ export default function MiniCalendar() {
           const ymd = toYMD(dt);
           const evs = eventsByDate[ymd] || [];
           const sls = slotsByDate[ymd] || [];
+          const isToday = ymd === todayYMD;
           const classes = ['mc-day'];
+          if (isToday) classes.push('today');
           if (evs.length && sls.length) classes.push('both');
           else if (evs.length) classes.push('has-event');
           else if (sls.length) classes.push('has-slot');

@@ -42,10 +42,10 @@ export default function AdminDashboard() {
           desc="Record and manage student grades."
         />
         <Card
-          to="/users"
+          to="/adminusers"
           icon="👥"
-          title="Manage User Roles"
-          desc="Assign admin or student roles."
+          title="Manage Users"
+          desc="Edit user profiles, roles, and departments."
         />
       </div>
     </div>

@@ -9,6 +9,7 @@ export default function Timetable() {
 
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -40,6 +41,7 @@ export default function Timetable() {
   const addSlot = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     if (!user) return setError("You must be logged in.");
 
     const slot = { ...form };
@@ -64,6 +66,8 @@ export default function Timetable() {
       }
       setItems((prev) => [...prev, slot]);
       setForm({ title: "", date: "", start: "09:00", end: "10:00", room: "" });
+      setSuccess("✓ Timetable slot added and saved to database!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to save timetable.");
@@ -79,6 +83,8 @@ export default function Timetable() {
       const { error } = await supabase.from("timetables").update({ items: next, updated_at: new Date().toISOString() }).eq("id", user.id);
       if (error) throw error;
       setItems(next);
+      setSuccess("✓ Timetable slot deleted from database!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to delete slot.");
@@ -92,6 +98,8 @@ export default function Timetable() {
       const { error } = await supabase.from("timetables").update({ items: next, updated_at: new Date().toISOString() }).eq("id", user.id);
       if (error) throw error;
       setItems(next);
+      setSuccess("✓ Timetable slot updated and saved to database!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to update slot.");
@@ -119,6 +127,7 @@ export default function Timetable() {
     <div className="timetable-container">
       <h2 className="heading">Your Timetable{dateParam ? ` — ${dateParam}` : ''}</h2>
       {error && <p className="error">{error}</p>}
+      {success && <p className="success">{success}</p>}
 
       {/* Add Slot Form */}
       <form onSubmit={addSlot} className="timetable-form">
