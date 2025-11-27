@@ -171,19 +171,21 @@ const Home = () => {
               <div style={{ color: "#64748b", fontStyle: "italic" }}>No announcements yet.</div>
             </div>
           ) : (
-            announcements.map((announcement) => (
-              <div key={announcement.id} style={styles.announcementCard}>
-                <div style={styles.announcementTitle}>{announcement.title}</div>
-                <div style={styles.announcementBody}>{announcement.body}</div>
-                <div style={styles.announcementMeta}>
-                  {announcement.audience?.dept && <span style={styles.announcementTag}>{announcement.audience.dept}</span>}
-                  {announcement.audience?.year && <span style={styles.announcementTag}>Year {announcement.audience.year}</span>}
-                  <span style={styles.announcementTime}>
-                    {new Date(announcement.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </span>
+            <div style={styles.announcementCard}>
+              {announcements.map((announcement, idx) => (
+                <div key={announcement.id} style={{ ...styles.eventItem, borderBottom: idx !== announcements.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+                  <div style={styles.announcementTitle}>{announcement.title}</div>
+                  <div style={styles.announcementBodySmall}>{announcement.body}</div>
+                  <div style={styles.announcementMeta}>
+                    {announcement.audience?.dept && <span style={styles.announcementTag}>{announcement.audience.dept}</span>}
+                    {announcement.audience?.year && <span style={styles.announcementTag}>Year {announcement.audience.year}</span>}
+                    <span style={styles.announcementTime}>
+                      {new Date(announcement.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </section>
@@ -201,18 +203,20 @@ const Home = () => {
               <div style={{ color: "#64748b", fontStyle: "italic" }}>No upcoming events.</div>
             </div>
           ) : (
-            events.map((ev) => (
-              <div key={ev.id} style={styles.announcementCard}>
-                <div style={styles.announcementTitle}>{ev.title || "Untitled Event"}</div>
-                <div style={styles.announcementBody}>{ev.description || "No description provided."}</div>
-                <div style={styles.announcementMeta}>
-                  {ev.date && <span style={styles.announcementTag}>📅 {ev.date}</span>}
-                  <span style={styles.announcementTime}>
-                    {ev.created_at ? new Date(ev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No date set"}
-                  </span>
+            <div style={styles.announcementCard}>
+              {events.map((ev, idx) => (
+                <div key={ev.id} style={{ ...styles.eventItem, borderBottom: idx !== events.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+                  <div style={styles.announcementTitle}>{ev.title || "Untitled Event"}</div>
+                  <div style={styles.announcementBodySmall}>{ev.description || "No description provided."}</div>
+                  <div style={styles.announcementMeta}>
+                    {ev.date && <span style={styles.announcementTag}>📅 {ev.date}</span>}
+                    <span style={styles.announcementTime}>
+                      {ev.created_at ? new Date(ev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No date set"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </section>
@@ -367,6 +371,14 @@ const styles = {
     gap: "8px",
     alignItems: "center",
     flexWrap: "wrap",
+  },
+  eventItem: {
+    padding: '12px 0',
+  },
+  announcementBodySmall: {
+    fontSize: '13px',
+    color: '#475569',
+    marginBottom: '8px',
   },
   announcementTag: {
     display: "inline-block",
