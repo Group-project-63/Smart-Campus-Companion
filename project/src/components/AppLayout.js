@@ -32,7 +32,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
+    <div style={{ minHeight: "100vh", background: "transparent" }}>
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.left}>
@@ -43,7 +43,6 @@ export default function AppLayout() {
           <nav style={styles.nav}>
             <Link to="/timetable" style={styles.link}>Timetable</Link>
             <Link to="/events" style={styles.link}>Events</Link>
-            <Link to="/notes" style={styles.link}>Notes</Link>
             <Link to="/announcements" style={styles.link}>Announcements</Link>
             <Link to="/map" style={styles.link}>Map</Link>
             <Link to="/profile" style={styles.link}>Profile</Link>
@@ -53,7 +52,7 @@ export default function AppLayout() {
 
         <div style={styles.right}>
           <div style={styles.searchWrap}>
-            <SearchBar placeholder="Search events, announcements, notes…" />
+            <SearchBar placeholder="Search events, announcements" />
           </div>
 
           {/* Circular profile icon + dropdown */}

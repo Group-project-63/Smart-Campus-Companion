@@ -6,51 +6,50 @@ import { useSearch } from "../context/SearchContext";
 import MiniCalendar from "../components/MiniCalendar";
 import { supabase } from "../services/supabase";
 
-// Add CSS for animations
+// Add CSS for animations and decorative blobs
 const styleSheet = document.createElement("style");
 styleSheet.textContent = `
-  @keyframes gradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  /* entrance animation */
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes wave {
-    0% {
-      transform: rotate(0deg);
-    }
-    10% {
-      transform: rotate(14deg);
-    }
-    20% {
-      transform: rotate(-8deg);
-    }
-    30% {
-      transform: rotate(14deg);
-    }
-    40% {
-      transform: rotate(-4deg);
-    }
-    50% {
-      transform: rotate(10deg);
-    }
-    60% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(0deg);
-    }
+  .fade-in-up { opacity: 0; transform: translateY(12px); animation: fadeUp 600ms cubic-bezier(.2,.9,.2,1) forwards; }
+  .delay-1 { animation-delay: 100ms; }
+  .delay-2 { animation-delay: 220ms; }
+  .delay-3 { animation-delay: 340ms; }
+  .delay-4 { animation-delay: 460ms; }
+
+  /* subtle floating decoration */
+  .blob {
+    position: absolute;
+    pointer-events: none;
+    filter: blur(28px) saturate(120%);
+    opacity: 0.55;
+    mix-blend-mode: screen;
+    border-radius: 50%;
+    transform-origin: center;
   }
-  
-  .home-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+
+  .blob-1 { width: 360px; height: 260px; right: -60px; top: -30px; background: radial-gradient(circle at 20% 30%, rgba(118,75,162,0.95), rgba(102,126,234,0.85)); animation: float 8s ease-in-out infinite; }
+  .blob-2 { width: 320px; height: 220px; left: -80px; bottom: -40px; background: radial-gradient(circle at 80% 60%, rgba(79,172,254,0.9), rgba(240,147,251,0.85)); animation: float 10s ease-in-out infinite reverse; }
+
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(4deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+  }
+
+  /* home card hover (slight lift) */
+  .home-card {
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1), box-shadow 260ms ease, backdrop-filter 260ms ease;
+  }
+  .home-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.6) !important; }
+
+  /* small accessibility: make reduced-motion users skip animations */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in-up, .blob, .home-card { animation: none !important; transition: none !important; }
   }
 `;
 if (typeof document !== 'undefined' && !document.querySelector('style[data-home-styles]')) {
@@ -121,13 +120,15 @@ const Home = () => {
     user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : "") || "User";
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="home-root">
+      <div className="blob blob-1" aria-hidden="true" />
+      <div className="blob blob-2" aria-hidden="true" />
       {/* Hero */}
-      <section style={styles.hero}>
+      <section style={styles.hero} className="fade-in-up delay-1">
         <div style={styles.heroContent}>
           <div style={styles.greeting}>
             {loading ? (
-              <span style={{ fontSize: "32px", fontWeight: 700, color: "#0f172a" }}>
+              <span style={{ fontSize: "32px", fontWeight: 700, color: "#1c1a43ff" }}>
                 Welcome to Smart Campus Companion
               </span>
             ) : (
@@ -140,38 +141,38 @@ const Home = () => {
           </div>
           <h2 style={styles.title}> Smart Campus Companion</h2>
           <p style={styles.subtitle}>
-            Manage your classes, events, notes, and campus info—all in one place.
+            Manage your classes, events, and campus info—all in one place.
           </p>
         </div>
         <div style={styles.heroBadge}>🚀 MVP</div>
       </section>
 
       {/* Quick Actions */}
-      <section style={styles.section}>
+      <section style={styles.section} className="home-section fade-in-up delay-2">
         <h2 style={styles.sectionTitle}>Quick Actions</h2>
         <div style={styles.grid}>
           <Card to="/timetable" emoji="📘" title="Timetable" desc="View & manage your weekly schedule." />
           <Card to="/courses" emoji="📚" title="Courses" desc="Browse and enroll in courses." />
           <Card to="/map" emoji="🗺️" title="Campus Map" desc="Find buildings and facilities." />
-          <Card to="/notes" emoji="📄" title="Notes Upload" desc="Upload and access your notes." />
+          {/* Notes Upload removed from homepage per request */}
           {isAdmin && <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />}
         </div>
       </section>
 
       {/* Announcements Section */}
-      <section style={{ marginTop: "32px" }}>
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
         <h2 style={styles.sectionTitle}>📢 Latest Announcements</h2>
         <div style={{ display: "grid", gap: "16px" }}>
           {announcementsLoading ? (
-            <div style={styles.announcementCard}>
+            <div style={styles.announcementCard} className="home-announcement-card">
               <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading announcements...</div>
             </div>
           ) : announcements.length === 0 ? (
-            <div style={styles.announcementCard}>
+            <div style={styles.announcementCard} className="home-announcement-card">
               <div style={{ color: "#64748b", fontStyle: "italic" }}>No announcements yet.</div>
             </div>
           ) : (
-            <div style={styles.announcementCard}>
+            <div style={styles.announcementCard} className="home-announcement-card">
               {announcements.map((announcement, idx) => (
                 <div key={announcement.id} style={{ ...styles.eventItem, borderBottom: idx !== announcements.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
                   <div style={styles.announcementTitle}>{announcement.title}</div>
@@ -191,7 +192,7 @@ const Home = () => {
       </section>
 
       {/* Upcoming Events (now visible on home) */}
-      <section style={{ marginTop: "32px" }}>
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
         <h2 style={styles.sectionTitle}>📅 Upcoming Events</h2>
         <div style={{ display: "grid", gap: "16px" }}>
           {eventsLoading ? (
@@ -221,7 +222,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section style={{ marginTop: "32px" }}>
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-4">
         <h2 style={styles.sectionTitle}>Calendar</h2>
         <MiniCalendar />
       </section>
@@ -240,13 +241,9 @@ function Card({ to, emoji, title, desc }) {
 }
 
 const styles = {
-  page: { 
-    minHeight: "100vh", 
-    background: `
-      linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)
-    `,
-    backgroundSize: "400% 400%",
-    animation: "gradientShift 15s ease infinite",
+  page: {
+    minHeight: "100vh",
+    background: "transparent",
     padding: "24px",
     position: "relative",
     overflow: "hidden"
@@ -282,7 +279,7 @@ const styles = {
     fontSize: "36px",
     fontWeight: 800,
     color: "#0f172a",
-    backgroundImage: "linear-gradient(135deg, #667eea, #764ba2)",
+    backgroundImage: "linear-gradient(135deg, #070707ff, #000000ff)",
     backgroundClip: "text",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
@@ -292,7 +289,7 @@ const styles = {
     margin: 0, 
     color: "#0f172a", 
     fontWeight: 800,
-    backgroundImage: "linear-gradient(135deg, #667eea, #764ba2)",
+    backgroundImage: "linear-gradient(135deg, #000000ff, #000000ff)",
     backgroundClip: "text",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
@@ -303,7 +300,7 @@ const styles = {
     position: "absolute", 
     right: "24px", 
     top: "24px",
-    background: "linear-gradient(135deg, #667eea, #764ba2)", 
+    background: "linear-gradient(135deg, #000000ff, #000000ff)", 
     color: "#fff", 
     padding: "8px 14px",
     borderRadius: "50px", 
@@ -313,12 +310,12 @@ const styles = {
     boxShadow: "0 8px 16px rgba(102, 126, 234, 0.3)",
   },
   section: { marginTop: "32px" },
-  sectionTitle: { 
-    fontSize: "24px", 
-    color: "#ffffff", 
-    marginBottom: "18px", 
+  sectionTitle: {
+    fontSize: "24px",
+    color: "#0f172a",
+    marginBottom: "18px",
     fontWeight: 700,
-    textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+    textShadow: "0 2px 4px rgba(0, 0, 0, 0.06)"
   },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "18px" },
   card: {

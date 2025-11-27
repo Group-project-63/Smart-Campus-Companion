@@ -66,7 +66,7 @@ const styles = {
   page: {
     padding: "24px",
     fontFamily: "system-ui, Arial",
-    background: "#f8fafc",
+    background: "transparent",
     minHeight: "100vh",
   },
   header: {

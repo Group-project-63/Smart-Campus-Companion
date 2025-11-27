@@ -7,6 +7,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Use the same soft homepage background across the entire app */
+:root{
+  --app-gradient: linear-gradient(135deg, #0b0b0b 0%, #1f1f1f 25%, #e6e6e6 75%, #ffffff 100%);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--app-gradient);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

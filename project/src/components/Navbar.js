@@ -53,7 +53,7 @@ export default function Navbar() {
 
       {/* Always render the search bar on protected pages */}
       <div style={{ flex: 1, maxWidth: 520, marginLeft: "auto" }}>
-        <SearchBar placeholder="Search events, announcements, notes…" />
+        <SearchBar placeholder="Search events, announcement" />
       </div>
 
       {currentUser && (

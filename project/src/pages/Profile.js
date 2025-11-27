@@ -136,17 +136,6 @@ export default function Profile() {
                 📖 View-only: Students cannot edit profile settings. Contact an admin to make changes.
               </div>
             )}
-            {/* Replaced textual Logout button with circular profile icon */}
-            <div style={styles.iconWrapper} title={user?.user_metadata?.full_name || user?.email}>
-              <div style={styles.avatar}>{
-                (user?.user_metadata?.full_name || user?.email || "U")
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)
-              }</div>
-            </div>
           </div>
         </form>
       </section>
@@ -238,7 +227,7 @@ const styles = {
   },
   primaryBtn: {
     padding: "12px 16px",
-    background: "#2563eb",
+    background: "#000000ff",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
@@ -293,7 +282,7 @@ const styles = {
     width: 44,
     height: 44,
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "linear-gradient(135deg, #000000ff 0%, #000000ff 100%)",
     color: "#fff",
     display: "flex",
     alignItems: "center",
