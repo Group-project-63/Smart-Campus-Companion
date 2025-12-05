@@ -2,14 +2,32 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import SearchBar from "./SearchBar";
+import useRole from "../hooks/useRole";
 
 export default function Navbar() {
   const { currentUser, logout } = useAuth();
+  const role = useRole();
+  const isAdmin = role === "admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleProfileClick = () => {
     navigate("/profile");
+    setMenuOpen(false);
+  };
+
+  const handleCoursesClick = () => {
+    navigate("/courses");
+    setMenuOpen(false);
+  };
+
+  const handleGradesClick = () => {
+    navigate("/grades");
+    setMenuOpen(false);
+  };
+
+  const handleAdminClick = () => {
+    navigate("/admindashboard");
     setMenuOpen(false);
   };
 
@@ -94,8 +112,9 @@ export default function Navbar() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 12,
                 boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                minWidth: 200,
+                minWidth: 240,
                 zIndex: 101,
+                overflow: "visible",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -115,7 +134,71 @@ export default function Navbar() {
               </div>
 
               {/* Menu Items */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", overflow: "visible" }}>
+                <button
+                  onClick={handleCoursesClick}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    background: "none",
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#334155",
+                    fontWeight: 500,
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                >
+                  📚 Courses
+                </button>
+
+                <button
+                  onClick={handleGradesClick}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    background: "none",
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#334155",
+                    fontWeight: 500,
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                >
+                  🧾 Grades
+                </button>
+
+                {isAdmin && (
+                  <button
+                    onClick={handleAdminClick}
+                    style={{
+                      width: "100%",
+                      padding: "12px 16px",
+                      background: "none",
+                      border: "none",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      color: "#334155",
+                      fontWeight: 500,
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                  >
+                    🛠️ Admin Dashboard
+                  </button>
+                )}
+
+                <div style={{ borderTop: "1px solid #f1f5f9" }} />
+
                 <button
                   onClick={handleProfileClick}
                   style={{

@@ -26,6 +26,7 @@ import Announcements from "./components/Announcements";
 import Courses from "./components/Courses";
 import Profile from "./pages/Profile";
 import Forbidden from "./pages/Forbidden";
+import SearchResults from "./pages/SearchResults";
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
               <Route path="map" element={<CampusMap />} />
               <Route path="announcements" element={<Announcements />} />
               <Route path="courses" element={<Courses />} />
+              <Route path="search" element={<SearchResults />} />
               <Route path="profile" element={<Profile />} />
 
               {/* Admin pages */}

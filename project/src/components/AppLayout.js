@@ -19,6 +19,21 @@ export default function AppLayout() {
     }
   };
 
+  const handleCoursesClick = () => {
+    navigate("/courses");
+    setMenuOpen(false);
+  };
+
+  const handleGradesClick = () => {
+    navigate("/grades");
+    setMenuOpen(false);
+  };
+
+  const handleAdminClick = () => {
+    navigate("/admindashboard");
+    setMenuOpen(false);
+  };
+
   const getUserInitials = () => {
     if (currentUser?.user_metadata?.full_name) {
       return currentUser.user_metadata.full_name
@@ -102,6 +117,60 @@ export default function AppLayout() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <button
+                      onClick={handleCoursesClick}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        color: "#334155",
+                      }}
+                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                    >
+                      📚 Courses
+                    </button>
+                    <button
+                      onClick={handleGradesClick}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        background: "none",
+                        border: "none",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        color: "#334155",
+                      }}
+                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                    >
+                      🧾 Grades
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={handleAdminClick}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          background: "none",
+                          border: "none",
+                          textAlign: "left",
+                          cursor: "pointer",
+                          fontSize: 14,
+                          color: "#334155",
+                        }}
+                        onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                        onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                      >
+                        🛠️ Admin Dashboard
+                      </button>
+                    )}
+                    <div style={{ borderTop: "1px solid #f1f5f9" }} />
+                    <button
                       onClick={() => { setMenuOpen(false); navigate('/profile'); }}
                       style={{
                         width: "100%",
@@ -113,6 +182,8 @@ export default function AppLayout() {
                         fontSize: 14,
                         color: "#334155",
                       }}
+                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f8fafc")}
+                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
                     >
                       👤 View Profile
                     </button>
@@ -129,6 +200,8 @@ export default function AppLayout() {
                         color: "#ef4444",
                         fontWeight: 600,
                       }}
+                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#fff7f7")}
+                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
                     >
                       🚪 Logout
                     </button>

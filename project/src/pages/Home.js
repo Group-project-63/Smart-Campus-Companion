@@ -60,6 +60,8 @@ if (typeof document !== 'undefined' && !document.querySelector('style[data-home-
 const Home = () => {
   const { user, loading, isAdmin } = useAuth();
   const { setScope } = useSearch();
+  const [timetableItems, setTimetableItems] = useState([]);
+  const [timetableLoading, setTimetableLoading] = useState(true);
   const [announcements, setAnnouncements] = useState([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(true);
   const [events, setEvents] = useState([]);
@@ -69,17 +71,40 @@ const Home = () => {
     setScope("all");
   }, [setScope]);
 
-  // Load announcements
+  // Load timetable slots
   useEffect(() => {
+    if (!user) return;
     (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("timetables")
+          .select("items")
+          .eq("id", user.id)
+          .limit(1)
+          .single();
+        if (error && error.code !== "PGRST116") throw error;
+        setTimetableItems(data?.items || []);
+      } catch (err) {
+        console.error("Failed to load timetable:", err);
+        setTimetableItems([]);
+      } finally {
+        setTimetableLoading(false);
+      }
+    })();
+  }, [user]);
+
+  // Load announcements and subscribe to changes
+  useEffect(() => {
+    const loadAnnouncements = async () => {
+      setAnnouncementsLoading(true);
       try {
         const { data, error } = await supabase
           .from("announcements")
           .select("*")
           .order("published_at", { ascending: false })
-          .limit(5);
-        
+          .limit(3);
         if (error) throw error;
+        console.log("Announcements loaded:", data);
         setAnnouncements(data || []);
       } catch (err) {
         console.error("Failed to load announcements:", err);
@@ -87,25 +112,39 @@ const Home = () => {
       } finally {
         setAnnouncementsLoading(false);
       }
-    })();
+    };
+
+    loadAnnouncements();
+
+    // Subscribe to real-time changes
+    const subscription = supabase
+      .channel("announcements-channel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "announcements" },
+        (payload) => {
+          console.log("Announcement change detected:", payload);
+          // Reload announcements when any change occurs
+          loadAnnouncements();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Load upcoming events and show them on home page
+  // Load events and subscribe to changes
   useEffect(() => {
-    (async () => {
-      setEventsLoading(true);
+    const loadEvents = async () => {
       try {
         const { data, error } = await supabase
           .from("events")
           .select("*")
-          .order("created_at", { ascending: false })
-          .limit(6);
-        
-        if (error) {
-          console.error("Supabase events error:", error);
-          throw error;
-        }
-        console.log("Fetched events:", data);
+          .order("date", { ascending: true })
+          .limit(3);
+        if (error) throw error;
         setEvents(data || []);
       } catch (err) {
         console.error("Failed to load events:", err);
@@ -113,7 +152,26 @@ const Home = () => {
       } finally {
         setEventsLoading(false);
       }
-    })();
+    };
+
+    loadEvents();
+
+    // Subscribe to real-time changes
+    const subscription = supabase
+      .channel("events")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "events" },
+        (payload) => {
+          // Reload events when any change occurs
+          loadEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const prettyName =
@@ -147,41 +205,66 @@ const Home = () => {
         <div style={styles.heroBadge}>🚀 MVP</div>
       </section>
 
-      {/* Quick Actions */}
-      <section style={styles.section} className="home-section fade-in-up delay-2">
-        <h2 style={styles.sectionTitle}>Quick Actions</h2>
-        <div style={styles.grid}>
-          <Card to="/timetable" emoji="📘" title="Timetable" desc="View & manage your weekly schedule." />
-          <Card to="/courses" emoji="📚" title="Courses" desc="Browse and enroll in courses." />
-          <Card to="/map" emoji="🗺️" title="Campus Map" desc="Find buildings and facilities." />
-          {/* Notes Upload removed from homepage per request */}
-          {isAdmin && <Card to="/admindashboard" emoji="🛠️" title="Admin Dashboard" desc="Manage campus events and announcements." />}
+
+      {/* Announcements and events removed from homepage */}
+
+      {/* Timetable Section */}
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={styles.sectionTitle}>📘 My Timetable</h2>
+          <Link to="/timetable" style={{ fontSize: 14, color: '#3b82f6', textDecoration: 'none' }}>Edit</Link>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          {timetableLoading ? (
+            <div style={styles.timetableCard}>
+              <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading timetable...</div>
+            </div>
+          ) : timetableItems.length === 0 ? (
+            <div style={styles.timetableCard}>
+              <div style={{ color: "#64748b", fontStyle: "italic" }}>No timetable slots yet. <Link to="/timetable" style={{ color: '#3b82f6' }}>Add one</Link></div>
+            </div>
+          ) : (
+            <div style={styles.timetableCard}>
+              {timetableItems.map((item, idx) => (
+                <div key={idx} style={{ borderBottom: idx !== timetableItems.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', padding: '12px 0' }}>
+                  <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.title}</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>
+                    📅 {item.date} · ⏰ {item.start} - {item.end} · 🏢 {item.room}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
+
       {/* Announcements Section */}
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-2">
         <h2 style={styles.sectionTitle}>📢 Latest Announcements</h2>
-        <div style={{ display: "grid", gap: "16px" }}>
+        <div style={{ marginTop: 12 }}>
           {announcementsLoading ? (
-            <div style={styles.announcementCard} className="home-announcement-card">
+            <div style={styles.previewCard}>
               <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading announcements...</div>
             </div>
           ) : announcements.length === 0 ? (
-            <div style={styles.announcementCard} className="home-announcement-card">
+            <div style={styles.previewCard}>
               <div style={{ color: "#64748b", fontStyle: "italic" }}>No announcements yet.</div>
             </div>
           ) : (
-            <div style={styles.announcementCard} className="home-announcement-card">
-              {announcements.map((announcement, idx) => (
-                <div key={announcement.id} style={{ ...styles.eventItem, borderBottom: idx !== announcements.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+            <div style={{ display: "grid", gap: "12px" }}>
+              {announcements.map((announcement) => (
+                <div key={announcement.id} style={styles.previewCard}>
                   <div style={styles.announcementTitle}>{announcement.title}</div>
-                  <div style={styles.announcementBodySmall}>{announcement.body}</div>
+                  <div style={styles.announcementBody}>
+                    {announcement.body ? announcement.body.substring(0, 100) : "No description"}...
+                  </div>
                   <div style={styles.announcementMeta}>
-                    {announcement.audience?.dept && <span style={styles.announcementTag}>{announcement.audience.dept}</span>}
-                    {announcement.audience?.year && <span style={styles.announcementTag}>Year {announcement.audience.year}</span>}
+                    <span style={styles.announcementTag}>{announcement.audience?.dept || 'All'}</span>
                     <span style={styles.announcementTime}>
-                      {new Date(announcement.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {announcement.published_at 
+                        ? new Date(announcement.published_at).toLocaleDateString() 
+                        : new Date(announcement.updated_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -191,28 +274,28 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Upcoming Events (now visible on home) */}
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
+      {/* Events Section */}
+      <section style={{ marginTop: "32px" }} className="fade-in-up delay-2">
         <h2 style={styles.sectionTitle}>📅 Upcoming Events</h2>
-        <div style={{ display: "grid", gap: "16px" }}>
+        <div style={{ marginTop: 12 }}>
           {eventsLoading ? (
-            <div style={styles.announcementCard}>
+            <div style={styles.previewCard}>
               <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading events...</div>
             </div>
           ) : events.length === 0 ? (
-            <div style={styles.announcementCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>No upcoming events.</div>
+            <div style={styles.previewCard}>
+              <div style={{ color: "#64748b", fontStyle: "italic" }}>No events upcoming.</div>
             </div>
           ) : (
-            <div style={styles.announcementCard}>
-              {events.map((ev, idx) => (
-                <div key={ev.id} style={{ ...styles.eventItem, borderBottom: idx !== events.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-                  <div style={styles.announcementTitle}>{ev.title || "Untitled Event"}</div>
-                  <div style={styles.announcementBodySmall}>{ev.description || "No description provided."}</div>
+            <div>
+              {events.map((event) => (
+                <div key={event.id} style={styles.previewCard}>
+                  <div style={styles.announcementTitle}>{event.name}</div>
+                  <div style={styles.announcementBody}>{event.description?.substring(0, 100) || 'No description'}...</div>
                   <div style={styles.announcementMeta}>
-                    {ev.date && <span style={styles.announcementTag}>📅 {ev.date}</span>}
+                    <span style={styles.announcementTag}>{event.category || 'Event'}</span>
                     <span style={styles.announcementTime}>
-                      {ev.created_at ? new Date(ev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "No date set"}
+                      {new Date(event.date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -222,6 +305,7 @@ const Home = () => {
         </div>
       </section>
 
+      
       <section style={{ marginTop: "32px" }} className="fade-in-up delay-4">
         <h2 style={styles.sectionTitle}>Calendar</h2>
         <MiniCalendar />
@@ -230,15 +314,7 @@ const Home = () => {
   );
 };
 
-function Card({ to, emoji, title, desc }) {
-  return (
-    <Link to={to} style={styles.card} className="home-card">
-      <div style={styles.cardEmoji}>{emoji}</div>
-      <div style={styles.cardTitle}>{title}</div>
-      <div style={styles.cardDesc}>{desc}</div>
-    </Link>
-  );
-}
+
 
 const styles = {
   page: {
@@ -318,22 +394,24 @@ const styles = {
     textShadow: "0 2px 4px rgba(0, 0, 0, 0.06)"
   },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "18px" },
-  card: {
-    display: "block", 
-    border: "1px solid rgba(255, 255, 255, 0.2)", 
-    background: "rgba(255, 255, 255, 0.95)", 
-    borderRadius: "16px", 
-    padding: "24px", 
-    textDecoration: "none", 
+  previewCard: {
+    display: "block",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    background: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "12px",
+    padding: "18px",
     color: "inherit",
-    boxShadow: "0 15px 40px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
-    transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, backdrop-filter 0.3s ease",
-    backdropFilter: "blur(10px)",
-    cursor: "pointer",
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
   },
-  cardEmoji: { fontSize: "32px", marginBottom: "12px" },
-  cardTitle: { fontSize: "18px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" },
-  cardDesc: { fontSize: "14px", color: "#64748b", lineHeight: "1.5" },
+  timetableCard: {
+    display: "block",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    background: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "12px",
+    padding: "18px",
+    color: "inherit",
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
+  },
   logoutBtn: {
     padding: "10px 16px", backgroundColor: "#ef4444", color: "#fff",
     border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600,

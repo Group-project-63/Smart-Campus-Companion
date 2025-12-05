@@ -1,9 +1,11 @@
 import React, { useRef } from "react";
 import { useSearch } from "../context/SearchContext";
+import { useNavigate } from "react-router-dom";
 
 export default function SearchBar({ placeholder = "Search…", showScope = true }) {
   const { query, setQuery, scope, setScope } = useSearch();
   const inputRef = useRef();
+  const navigate = useNavigate();
 
   // const onClear = () => {
   //   setQuery("");
@@ -36,6 +38,14 @@ export default function SearchBar({ placeholder = "Search…", showScope = true 
         placeholder={placeholder}
         aria-label="Search"
         style={{ flex: 1, border: "none", outline: "none", fontSize: "0.95rem" }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            // navigate to search results page
+            const q = (query || "").trim();
+            const params = new URLSearchParams({ q, scope });
+            navigate(`/search?${params.toString()}`);
+          }
+        }}
       />
       {showScope && (
         <select
