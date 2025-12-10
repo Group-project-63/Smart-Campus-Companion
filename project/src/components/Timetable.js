@@ -15,8 +15,7 @@ export default function Timetable() {
     title: "",
     date: "",
     start: "09:00",
-    end: "10:00",
-    room: ""
+    end: "10:00"
   });
 
   const location = useLocation();
@@ -65,7 +64,7 @@ export default function Timetable() {
         if (updErr) throw updErr;
       }
       setItems((prev) => [...prev, slot]);
-      setForm({ title: "", date: "", start: "09:00", end: "10:00", room: "" });
+      setForm({ title: "", date: "", start: "09:00", end: "10:00" });
       setSuccess("✓ Timetable slot added and saved to database!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -107,7 +106,7 @@ export default function Timetable() {
   };
 
   const [editingIndex, setEditingIndex] = useState(null);
-  const [edit, setEdit] = useState({ title: "", date: "", start: "", end: "", room: "" });
+  const [edit, setEdit] = useState({ title: "", date: "", start: "", end: "" });
 
   const startEdit = (idx) => {
     const it = items[idx];
@@ -116,7 +115,7 @@ export default function Timetable() {
   };
   const cancelEdit = () => {
     setEditingIndex(null);
-    setEdit({ title: "", date: "", start: "", end: "", room: "" });
+    setEdit({ title: "", date: "", start: "", end: "" });
   };
   const saveEdit = async () => {
     await updateSlot(editingIndex, edit);
@@ -137,7 +136,6 @@ export default function Timetable() {
           <input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
           <input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
         </div>
-        <input placeholder="Room" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
         <button className="primary-btn" disabled={busy}>{busy ? "Adding..." : "Add Slot"}</button>
       </form>
 
@@ -151,7 +149,6 @@ export default function Timetable() {
                 <input type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
                 <input type="time" value={edit.start} onChange={(e) => setEdit({ ...edit, start: e.target.value })} />
                 <input type="time" value={edit.end} onChange={(e) => setEdit({ ...edit, end: e.target.value })} />
-                <input value={edit.room} onChange={(e) => setEdit({ ...edit, room: e.target.value })} />
                 <div className="actions">
                   <button className="primary-btn" onClick={saveEdit}>Save</button>
                   <button className="cancel-btn" type="button" onClick={cancelEdit}>Cancel</button>
@@ -159,7 +156,7 @@ export default function Timetable() {
               </div>
             ) : (
               <div className="slot-info">
-                <strong>{it.title}</strong> — {it.date} {it.start}-{it.end} ({it.room})
+                <strong>{it.title}</strong> — {it.date} {it.start}-{it.end}
                 <div className="actions">
                   <button className="edit-btn" onClick={() => startEdit(idx)}>Edit</button>
                   <button className="delete-btn" onClick={() => removeSlot(idx)}>Delete</button>
