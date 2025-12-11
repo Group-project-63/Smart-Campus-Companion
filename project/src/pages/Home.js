@@ -206,110 +206,109 @@ const Home = () => {
       </section>
 
 
-      {/* Announcements and events removed from homepage */}
+      {/* Main content with two-column layout in unified container */}
+      <div style={{ marginTop: "32px", background: "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.96) 100%)", border: "1px solid rgba(226, 232, 240, 0.6)", borderRadius: "16px", padding: "24px", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)", backdropFilter: "blur(10px)" }} className="fade-in-up delay-4">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
+          {/* Left side - Calendar */}
+          <div>
+            <h2 style={{ ...styles.sectionTitle, marginBottom: "16px" }}>Calendar</h2>
+            <MiniCalendar />
+          </div>
 
-      {/* Timetable Section */}
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-3">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={styles.sectionTitle}>📘 My Timetable</h2>
-          <Link to="/timetable" style={{ fontSize: 14, color: '#3b82f6', textDecoration: 'none' }}>Edit</Link>
-        </div>
-        <div style={{ marginTop: 12 }}>
-          {timetableLoading ? (
-            <div style={styles.timetableCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading timetable...</div>
-            </div>
-          ) : timetableItems.length === 0 ? (
-            <div style={styles.timetableCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>No timetable slots yet. <Link to="/timetable" style={{ color: '#3b82f6' }}>Add one</Link></div>
-            </div>
-          ) : (
-            <div style={styles.timetableCard}>
-              {timetableItems.map((item, idx) => (
-                <div key={idx} style={{ borderBottom: idx !== timetableItems.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', padding: '12px 0' }}>
-                  <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.title}</div>
-                  <div style={{ fontSize: 13, color: '#64748b' }}>
-                    📅 {item.date} · ⏰ {item.start} - {item.end} · 🏢 {item.room}
+          {/* Right sidebar - sections */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Timetable Section */}
+            <section>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: "0" }}>📘 My Timetable</h3>
+                <Link to="/timetable" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Edit</Link>
+              </div>
+              <div>
+                {timetableLoading ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "14px" }}>Loading...</div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-
-      {/* Announcements Section */}
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-2">
-        <h2 style={styles.sectionTitle}>📢 Latest Announcements</h2>
-        <div style={{ marginTop: 12 }}>
-          {announcementsLoading ? (
-            <div style={styles.previewCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading announcements...</div>
-            </div>
-          ) : announcements.length === 0 ? (
-            <div style={styles.previewCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>No announcements yet.</div>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gap: "12px" }}>
-              {announcements.map((announcement) => (
-                <div key={announcement.id} style={styles.previewCard}>
-                  <div style={styles.announcementTitle}>{announcement.title}</div>
-                  <div style={styles.announcementBody}>
-                    {announcement.body ? announcement.body.substring(0, 100) : "No description"}...
+                ) : timetableItems.length === 0 ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "14px" }}>No slots yet. <Link to="/timetable" style={{ color: '#3b82f6' }}>Add</Link></div>
                   </div>
-                  <div style={styles.announcementMeta}>
-                    <span style={styles.announcementTag}>{announcement.audience?.dept || 'All'}</span>
-                    <span style={styles.announcementTime}>
-                      {announcement.published_at 
-                        ? new Date(announcement.published_at).toLocaleDateString() 
-                        : new Date(announcement.updated_at).toLocaleDateString()}
-                    </span>
+                ) : (
+                  <div style={styles.compactCard}>
+                    {timetableItems.slice(0, 2).map((item, idx) => (
+                      <div key={idx} style={{ borderBottom: idx !== Math.min(timetableItems.length - 1, 1) ? '1px solid rgba(0,0,0,0.08)' : 'none', padding: '12px 0' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: "14px" }}>{item.title}</div>
+                        <div style={{ fontSize: "17px", color: '#64748b', marginTop: "6px" }}>
+                          📅 {item.date} 08:00-10:00
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                )}
+              </div>
+            </section>
 
-      {/* Events Section */}
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-2">
-        <h2 style={styles.sectionTitle}>📅 Upcoming Events</h2>
-        <div style={{ marginTop: 12 }}>
-          {eventsLoading ? (
-            <div style={styles.previewCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>Loading events...</div>
-            </div>
-          ) : events.length === 0 ? (
-            <div style={styles.previewCard}>
-              <div style={{ color: "#64748b", fontStyle: "italic" }}>No events upcoming.</div>
-            </div>
-          ) : (
-            <div>
-              {events.map((event) => (
-                <div key={event.id} style={styles.previewCard}>
-                  <div style={styles.announcementTitle}>{event.name}</div>
-                  <div style={styles.announcementBody}>{event.description?.substring(0, 100) || 'No description'}...</div>
-                  <div style={styles.announcementMeta}>
-                    <span style={styles.announcementTag}>{event.category || 'Event'}</span>
-                    <span style={styles.announcementTime}>
-                      {new Date(event.date).toLocaleDateString()}
-                    </span>
+            {/* Announcements Section */}
+            <section>
+              <h3 style={{ fontSize: "25px", fontWeight: 700, color: "#0f172a", marginBottom: "12px", margin: "0 0 12px 0" }}>📢 Announcements</h3>
+              <div>
+                {announcementsLoading ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "14px" }}>Loading...</div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                ) : announcements.length === 0 ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "14px" }}>No announcements.</div>
+                  </div>
+                ) : (
+                  <div style={styles.compactCard}>
+                    {announcements.slice(0, 1).map((announcement) => (
+                      <div key={announcement.id}>
+                        <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "14px", marginBottom: "4px" }}>{announcement.title}</div>
+                        <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.4", marginBottom: "6px" }}>
+                          {announcement.body ? announcement.body.substring(0, 60) : "No description"}...
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
+                          {announcement.published_at 
+                            ? new Date(announcement.published_at).toLocaleDateString() 
+                            : new Date(announcement.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
 
-      
-      <section style={{ marginTop: "32px" }} className="fade-in-up delay-4">
-        <h2 style={styles.sectionTitle}>Calendar</h2>
-        <MiniCalendar />
-      </section>
+            {/* Events Section */}
+            <section>
+              <h3 style={{ fontSize: "25px", fontWeight: 700, color: "#0f172a", marginBottom: "12px", margin: "0 0 12px 0" }}>📅 Events</h3>
+              <div>
+                {eventsLoading ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "17px" }}>Loading...</div>
+                  </div>
+                ) : events.length === 0 ? (
+                  <div style={styles.compactCard}>
+                    <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "15px" }}>No events upcoming.</div>
+                  </div>
+                ) : (
+                  <div style={styles.compactCard}>
+                    {events.slice(0, 1).map((event) => (
+                      <div key={event.id}>
+                        <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "14px", marginBottom: "4px" }}>{event.name}</div>
+                        <div style={{ fontSize: "15px", color: "#64748b", lineHeight: "1.4", marginBottom: "6px" }}>{event.description?.substring(0, 60) || 'No description'}...</div>
+                        <div style={{ fontSize: "15px", color: "#94a3b8" }}>
+                          {new Date(event.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -319,20 +318,21 @@ const Home = () => {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "transparent",
+    background: "linear-gradient(135deg, #e0e7ff 0%, #dbeafe 25%, #bfdbfe 75%, #a5f3fc 100%)",
     padding: "24px",
     position: "relative",
-    overflow: "hidden"
+    overflow: "hidden",
+    backdropFilter: "blur(1px)"
   },
   hero: {
     display: "flex", 
     alignItems: "center", 
     justifyContent: "space-between",
-    border: "1px solid rgba(255, 255, 255, 0.2)", 
-    background: "rgba(255, 255, 255, 0.95)", 
+    border: "1px solid rgba(59, 130, 246, 0.2)", 
+    background: "linear-gradient(135deg, rgba(240, 249, 255, 0.98) 0%, rgba(219, 234, 254, 0.96) 100%)", 
     padding: "40px",
     borderRadius: "20px", 
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
+    boxShadow: "0 20px 60px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
     marginBottom: "24px",
     position: "relative", 
     overflow: "hidden",
@@ -412,13 +412,42 @@ const styles = {
     color: "inherit",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
   },
+  smallCard: {
+    display: "block",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    background: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "8px",
+    padding: "10px",
+    color: "inherit",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+    fontSize: "13px",
+  },
+  largeCard: {
+    display: "block",
+    border: "2px solid rgba(226, 232, 240, 0.6)",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.96) 100%)",
+    borderRadius: "12px",
+    padding: "14px",
+    color: "inherit",
+    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.06)",
+    transition: "all 0.3s ease",
+  },
+  compactCard: {
+    display: "block",
+    border: "1px solid rgba(226, 232, 240, 0.8)",
+    background: "rgba(255, 255, 255, 0.7)",
+    borderRadius: "8px",
+    padding: "12px",
+    color: "inherit",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+  },
   logoutBtn: {
     padding: "10px 16px", backgroundColor: "#ef4444", color: "#fff",
     border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600,
   },
   announcementCard: {
     display: "block",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
+    border: "3px solid rgba(255, 255, 255, 0.2)",
     background: "rgba(255, 255, 255, 0.95)",
     borderRadius: "16px",
     padding: "20px",
@@ -436,7 +465,7 @@ const styles = {
     marginBottom: "10px",
   },
   announcementBody: {
-    fontSize: "14px",
+    fontSize: "15px",
     color: "#334155",
     lineHeight: "1.6",
     marginBottom: "12px",
@@ -448,7 +477,7 @@ const styles = {
     flexWrap: "wrap",
   },
   eventItem: {
-    padding: '12px 0',
+    padding: '15px 0',
   },
   announcementBodySmall: {
     fontSize: '13px',
@@ -466,7 +495,7 @@ const styles = {
     border: "1px solid rgba(102, 126, 234, 0.2)",
   },
   announcementTime: {
-    fontSize: "12px",
+    fontSize: "13px",
     color: "#94a3b8",
     marginLeft: "auto",
   },

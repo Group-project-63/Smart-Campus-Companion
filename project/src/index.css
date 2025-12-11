@@ -9,7 +9,7 @@ body {
 
 /* Use the same soft homepage background across the entire app */
 :root{
-  --app-gradient: linear-gradient(135deg, #0b0b0b 0%, #1f1f1f 25%, #e6e6e6 75%, #ffffff 100%);
+  --app-gradient: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 25%, #bfdbfe 75%, #a5f3fc 100%);
 }
 
 @keyframes gradientShift {

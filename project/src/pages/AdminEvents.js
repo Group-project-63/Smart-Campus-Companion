@@ -209,7 +209,7 @@ export default function AdminEvents() {
       {/* Create Form Card */}
       <div style={ui.card}>
         <h3 style={ui.cardTitle}>Create New Event</h3>
-        <form onSubmit={onPublish} style={ui.formGrid}>
+        <form onSubmit={onPublish} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <input
             placeholder="Event Title"
             value={title}
@@ -230,23 +230,20 @@ export default function AdminEvents() {
             style={{ ...ui.input, resize: "vertical" }}
           />
 
-          <div style={ui.row}>
-            <button type="submit" style={ui.btnPrimary}>
-              Create Event
-            </button>
-          </div>
+          <button type="submit" style={ui.btnPrimary}>
+            Create Event
+          </button>
         </form>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Simplified */}
       <div style={{ ...ui.card, marginTop: 16 }}>
-        <h3 style={ui.cardTitle}>Search</h3>
         <div style={ui.row}>
           <input
             placeholder="Search title/description…"
             value={qText}
             onChange={(e) => setQText(e.target.value)}
-            style={ui.input}
+            style={{ ...ui.input, flex: 1 }}
           />
           <button
             type="button"

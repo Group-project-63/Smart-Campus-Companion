@@ -241,8 +241,8 @@ export default function AdminAnnouncements() {
 
       {/* Create Form Card */}
       <div style={ui.card}>
-        <h3 style={ui.cardTitle}>Create New</h3>
-        <form onSubmit={onPublish} style={ui.formGrid}>
+        <h3 style={ui.cardTitle}>Create New Announcement</h3>
+        <form onSubmit={onPublish} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <input
             placeholder="Title"
             value={title}
@@ -251,7 +251,7 @@ export default function AdminAnnouncements() {
           />
           <textarea
             placeholder="Body"
-            rows={4}
+            rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             style={{ ...ui.input, resize: "vertical" }}
@@ -281,46 +281,23 @@ export default function AdminAnnouncements() {
               <option value="3">Year 3</option>
               <option value="4">Year 4</option>
             </select>
-
-            <button type="submit" style={ui.btnPrimary}>
-              Publish
-            </button>
           </div>
+
+          <button type="submit" style={ui.btnPrimary}>
+            Publish
+          </button>
         </form>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Simplified */}
       <div style={{ ...ui.card, marginTop: 16 }}>
-        <h3 style={ui.cardTitle}>Search & Filters</h3>
         <div style={ui.row}>
           <input
             placeholder="Search title/body…"
             value={qText}
             onChange={(e) => setQText(e.target.value)}
-            style={ui.input}
+            style={{ ...ui.input, flex: 1 }}
           />
-          <select
-            value={filterDept}
-            onChange={(e) => setFilterDept(e.target.value)}
-            style={ui.input}
-          >
-            <option value="">Dept: All</option>
-            <option value="CSE">CSE</option>
-            <option value="ECE">ECE</option>
-            <option value="ME">ME</option>
-            <option value="CE">CE</option>
-          </select>
-          <select
-            value={filterYear}
-            onChange={(e) => setFilterYear(e.target.value)}
-            style={ui.input}
-          >
-            <option value="">Year: All</option>
-            <option value="1">Year 1</option>
-            <option value="2">Year 2</option>
-            <option value="3">Year 3</option>
-            <option value="4">Year 4</option>
-          </select>
           <button
             type="button"
             onClick={() => {
@@ -348,7 +325,7 @@ export default function AdminAnnouncements() {
             <p style={{ margin: 0, color: "#64748b" }}>No announcements found.</p>
           </div>
         ) : (
-          <div style={ui.grid}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {filtered.map((a) => {
               const d = a.audience || {};
               return (
@@ -356,11 +333,11 @@ export default function AdminAnnouncements() {
                   <div style={ui.cardHeader}>
                     <div style={{ flex: 1 }}>
                       <div style={ui.itemTitle}>{a.title}</div>
-                      <div style={ui.metaRow}>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "6px", fontSize: "13px", color: "#64748b", flexWrap: "wrap" }}>
                         <Chip label={d.dept || "All Dept"} />
                         <Chip label={d.year != null ? `Year ${d.year}` : "All Years"} />
                         <span style={ui.metaMuted}>
-                          {a.updated_at ? "Updated: " + formatTS(a.updated_at) : "Published: " + formatTS(a.published_at)}
+                          Published: {formatTS(a.published_at)}
                         </span>
                       </div>
                     </div>
@@ -369,7 +346,7 @@ export default function AdminAnnouncements() {
                       <button onClick={() => askDelete(a.id)} style={ui.btnDanger}>Delete</button>
                     </div>
                   </div>
-                  <div style={ui.bodyText}>{a.body}</div>
+                  <div style={{ marginTop: "8px", fontSize: "14px", lineHeight: "1.5", color: "#334155" }}>{a.body}</div>
                 </div>
               );
             })}
